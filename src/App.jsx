@@ -1,11 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabase'
 
+// ============================================
+// FloatingPoint — the "+1" animation on tap
+// ============================================
+// Renders a "+1" that floats upward and fades out.
+// Each instance lives briefly, then calls onDone
+// so the parent can remove it from the list.
+
 function FloatingPoint({ onDone }) {
   const ref = useRef(null)
+
   useEffect(() => {
     const el = ref.current
     if (!el) return
+
     const anim = el.animate(
       [
         { opacity: 1, transform: 'translateY(0) scale(1)' },
@@ -15,7 +24,7 @@ function FloatingPoint({ onDone }) {
     )
     anim.onfinish = onDone
     return () => anim.cancel()
-  }, [])
+  }, []) // Empty deps — runs once on mount, never restarts
 
   return (
     <span
@@ -38,26 +47,34 @@ function FloatingPoint({ onDone }) {
   )
 }
 
+// ============================================
+// HouseButton — a single tappable house tile
+// ============================================
+// Displays the house crest image from /public/images/.
+// On tap: records the point (via onTap), shows a
+// floating "+1", and plays a press animation.
+
 function HouseButton({ house, onTap }) {
-  const [pops, setPops] = useState([])
-  const [pressed, setPressed] = useState(false)
-  const nextId = useRef(0)
+  const [pops, setPops] = useState([])     // Active "+1" animations
+  const [pressed, setPressed] = useState(false) // Press animation state
+  const nextId = useRef(0)                 // Unique ID counter for animations
 
   const handleTap = useCallback(() => {
-    console.log('tap', house.name, nextId.current)
-    onTap(house.id)
+    onTap(house.id) // Record the point to Supabase
+
+    // Spawn a new "+1" animation
     const id = nextId.current++
     setPops((p) => [...p, id])
+
+    // Brief scale-down for tactile press feedback
     setPressed(true)
     setTimeout(() => setPressed(false), 120)
   }, [house.id, onTap])
 
+  // Remove a "+1" animation after it finishes
   const removePop = useCallback((id) => {
     setPops((p) => p.filter((x) => x !== id))
   }, [])
-
-  // Supurbia (gold) gets dark text, others get white
-  const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'
 
   return (
     <button
@@ -67,13 +84,11 @@ function HouseButton({ house, onTap }) {
         overflow: 'hidden',
         width: '100%',
         aspectRatio: '1',
-        background: house.color_hex,
+        background: 'transparent',
         border: 'none',
         borderRadius: 16,
         cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        padding: 0,
         transform: pressed ? 'scale(0.95)' : 'scale(1)',
         transition: 'transform 0.12s cubic-bezier(0.22, 1, 0.36, 1)',
         boxShadow: `0 4px 12px ${house.color_hex}44`,
@@ -81,17 +96,20 @@ function HouseButton({ house, onTap }) {
         userSelect: 'none',
       }}
     >
-      <span
+      {/* House crest image — filename matches lowercase house name */}
+      <img
+        src={`/images/${house.name.toLowerCase()}.png`}
+        alt={house.name}
         style={{
-          fontSize: 32,
-          fontWeight: 700,
-          color: textColor,
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          borderRadius: 16,
+          display: 'block',
         }}
-      >
-        {house.name}
-      </span>
+      />
+
+      {/* Render any active "+1" floating animations */}
       {pops.map((id) => (
         <FloatingPoint key={id} onDone={() => removePop(id)} />
       ))}
@@ -99,12 +117,21 @@ function HouseButton({ house, onTap }) {
   )
 }
 
-function App() {
-  const [session, setSession] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [houses, setHouses] = useState([])
-  const [loading, setLoading] = useState(true)
+// ============================================
+// App — main application component
+// ============================================
+// Handles three states:
+//   1. Not logged in → login screen with Google SSO
+//   2. Logged in but no profile → unauthorized (student account)
+//   3. Logged in with profile → house points board
 
+function App() {
+  const [session, setSession] = useState(null)   // Supabase auth session
+  const [profile, setProfile] = useState(null)   // Staff profile from profiles table
+  const [houses, setHouses] = useState([])        // House data from houses table
+  const [loading, setLoading] = useState(true)    // Initial auth check
+
+  // ---- Auth: check session on mount and listen for changes ----
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -126,6 +153,9 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // ---- Fetch the staff profile from the profiles table ----
+  // If no profile exists (student accounts), profile stays null
+  // and the user sees the "staff only" screen.
   async function fetchProfile(userId) {
     const { data, error } = await supabase
       .from('profiles')
@@ -142,6 +172,7 @@ function App() {
     setLoading(false)
   }
 
+  // ---- Fetch houses once the user is authenticated ----
   useEffect(() => {
     if (!profile) return
     supabase
@@ -153,6 +184,11 @@ function App() {
       })
   }, [profile])
 
+  // ---- Award a point to a house ----
+  // Inserts a row into the points table. Value defaults to 1
+  // via the database schema. This is the "optimistic" pattern:
+  // the UI updates immediately via the FloatingPoint animation,
+  // and this write happens in the background.
   async function awardPoint(houseId) {
     const { error } = await supabase
       .from('points')
@@ -161,6 +197,7 @@ function App() {
     if (error) console.error('Failed to record point:', error.message)
   }
 
+  // ---- Auth actions ----
   async function signIn() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -173,6 +210,7 @@ function App() {
     await supabase.auth.signOut()
   }
 
+  // ---- Render: loading state ----
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
@@ -181,6 +219,7 @@ function App() {
     )
   }
 
+  // ---- Render: unauthorized (student or non-staff account) ----
   if (session && !profile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: 24, textAlign: 'center' }}>
@@ -192,9 +231,11 @@ function App() {
     )
   }
 
+  // ---- Render: login screen ----
   if (!session) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: 24 }}>
+        <img src="/images/logo.png" alt="SOAR Charter Academy" style={{ width: 120, marginBottom: 24 }} />
         <h1 style={{ fontSize: 24, marginBottom: 8 }}>SOAR House Points</h1>
         <p style={{ fontSize: 14, color: '#666', marginBottom: 32 }}>Staff sign-in required</p>
         <button
@@ -215,12 +256,19 @@ function App() {
     )
   }
 
-  // Logged in with profile — house board
+  // ---- Render: house points board (main app view) ----
+  // Houses are sorted alphabetically by name from the database.
+  // Layout: 2×2 grid for the first four, fifth centered below.
   return (
     <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
       <div style={{ maxWidth: 400, margin: '0 auto' }}>
+
+        {/* Header with logo and sign out */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h1 style={{ fontSize: 18, fontWeight: 700 }}>House Points</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/images/logo.png" alt="SOAR" style={{ width: 32, height: 32 }} />
+            <h1 style={{ fontSize: 18, fontWeight: 700 }}>House Points</h1>
+          </div>
           <button
             onClick={signOut}
             style={{
@@ -237,6 +285,7 @@ function App() {
           </button>
         </div>
 
+        {/* House buttons — first four in a 2×2 grid */}
         <div
           style={{
             display: 'grid',
@@ -249,6 +298,7 @@ function App() {
           ))}
         </div>
 
+        {/* Fifth house centered below the grid */}
         {houses[4] && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
             <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center' }}>
