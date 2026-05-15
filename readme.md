@@ -74,15 +74,6 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [ ] Optional category and notes on point entry
 - [ ] Live leaderboard (Supabase real-time subscriptions)
 
-### Phase 3 — Student Integration
-- [ ] Aeries roster sync (Python script, scheduled)
-- [ ] Individual student point assignment
-- [ ] Student search
-- [ ] Custom quick lists
-- [ ] Class roster views
-- [ ] Section-based class rosters (synced from Aeries master schedule)
-- [ ] Award points from roster view
-
 ### Phase 3.5 Branding Improvements 
 - [ ] House-colored UI theming throughout
 - [ ] Polished "Hogwarts-y" aesthetic (textures, typography, animations)
