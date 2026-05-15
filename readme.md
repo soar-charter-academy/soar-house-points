@@ -50,10 +50,14 @@ The sheet sync will be retired once app-based reporting is fully built out.
 
 ### Phase 1 — MVP (current)
 - [x] Supabase project and database schema
-- [ ] Google SSO authentication
-- [ ] House buttons UI (2×2 grid + 1, one-tap point giving)
-- [ ] Points written to Supabase on tap
+- [x] Google SSO authentication
+- [x] House buttons UI (2×2 grid + 1, one-tap point giving)
+- [x] Points written to Supabase on tap
 - [ ] Deploy to Vercel
+
+### Phase 1.5 — Branding & Visual Identity
+- [ ] SOAR eagle logo on login and header
+- [ ] Custom house crest assets (Canva/Adobe)
 
 ### Phase 2 — Sheet Sync & Staff Features
 - [ ] Bidirectional Google Sheet sync (Python + GitHub Actions)
@@ -70,6 +74,12 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [ ] Section-based class rosters (synced from Aeries master schedule)
 - [ ] Award points from roster view
 
+### Phase 3.5 Branding Improvements 
+- [ ] House-colored UI theming throughout
+- [ ] Polished "Hogwarts-y" aesthetic (textures, typography, animations)
+- [ ] Point-award animations and sound effects
+- [ ] Leaderboard visual treatment (banners, shields, etc.)
+
 ### Phase 4 — Reporting
 - [ ] Points by house over time
 - [ ] Points by staff member
@@ -83,6 +93,8 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [ ] Offline support (local point queue + sync on reconnect)
 - [ ] Push notifications for milestones
 - [ ] Student/parent read-only access tier
+- [ ] Student dashboard: house totals, personal point history, streaks
+- [ ] Parent view: child's points and house standing
 
 ### Phase 6 — Production Hardening (Optional)
 - [ ] Terraform infrastructure-as-code
