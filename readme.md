@@ -53,7 +53,7 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [x] Google SSO authentication
 - [x] House buttons UI (2×2 grid + 1, one-tap point giving)
 - [x] Points written to Supabase on tap
-- [ ] Deploy to Vercel
+- [x] Deploy to Netlify
 
 ### Phase 1.5 — Branding & Visual Identity
 - [ ] SOAR eagle logo on login and header
