@@ -18,9 +18,9 @@ function FloatingPoint({ onDone }) {
     const anim = el.animate(
       [
         { opacity: 1, transform: 'translateY(0) scale(1)' },
-        { opacity: 0, transform: 'translateY(-48px) scale(1.4)' },
+        { opacity: 0, transform: 'translateY(-48px) scale(1.8)' },
       ],
-      { duration: 1500, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }
+      { duration: 3000, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }
     )
     anim.onfinish = onDone
     return () => anim.cancel()
@@ -91,12 +91,10 @@ function HouseButton({ house, onTap }) {
         padding: 0,
         transform: pressed ? 'scale(0.95)' : 'scale(1)',
         transition: 'transform 0.12s cubic-bezier(0.22, 1, 0.36, 1)',
-        boxShadow: `0 4px 12px ${house.color_hex}44`,
         WebkitTapHighlightColor: 'transparent',
         userSelect: 'none',
       }}
     >
-      {/* House crest image — filename matches lowercase house name */}
       <img
         src={`/images/${house.name.toLowerCase()}.png`}
         alt={house.name}
@@ -109,7 +107,17 @@ function HouseButton({ house, onTap }) {
         }}
       />
 
-      {/* Render any active "+1" floating animations */}
+      {/* Bevel overlay — renders on top of the image */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 16,
+          boxShadow: 'inset 0 3px 6px rgba(255,255,255,0.4), inset 0 -3px 6px rgba(0,0,0,0.4)',
+          pointerEvents: 'none',
+        }}
+      />
+
       {pops.map((id) => (
         <FloatingPoint key={id} onDone={() => removePop(id)} />
       ))}
@@ -266,7 +274,7 @@ function App() {
         {/* Header with logo and sign out */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/images/logo.png" alt="SOAR" style={{ width: 32, height: 32 }} />
+            <img src="/images/logo.png" alt="SOAR" style={{ height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
             <h1 style={{ fontSize: 18, fontWeight: 700 }}>House Points</h1>
           </div>
           <button

@@ -56,10 +56,19 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [x] Deploy to Netlify
 
 ### Phase 1.5 — Branding & Visual Identity
-- [ ] SOAR eagle logo on login and header
-- [ ] Custom house crest assets (Canva/Adobe)
+- [x] SOAR eagle logo on login and header
+- [x] Custom house crest assets (Canva/Adobe)
 
-### Phase 2 — Sheet Sync & Staff Features
+### Phase 2 — Student Integration
+- [ ] Aeries roster sync (Python script, scheduled)
+- [ ] Individual student point assignment
+- [ ] Student search
+- [ ] Custom quick lists
+- [ ] Class roster views
+- [ ] Section-based class rosters (synced from Aeries master schedule)
+- [ ] Award points from roster view
+
+### Phase 3 — Sheet Sync & Staff Features
 - [ ] Bidirectional Google Sheet sync (Python + GitHub Actions)
 - [ ] Staff personal point history with soft-delete
 - [ ] Optional category and notes on point entry
