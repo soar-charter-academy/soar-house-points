@@ -18,7 +18,7 @@ A house points tracking app for SOAR Charter Academy. Staff award points to five
 | Frontend | React (Vite) | Mobile-first web app |
 | Backend / DB | Supabase (PostgreSQL) | Auth, REST API, real-time subscriptions, row-level security |
 | Auth | Google SSO via Supabase Auth | Restricted to `@soarcharteracademy.org` domain |
-| Hosting | Vercel (planned) | Free tier, push-to-deploy from GitHub |
+| Hosting | Netlify | Free tier, push-to-deploy from GitHub |
 | Mobile | Expo / React Native (planned) | iOS and Android app store deployment |
 | SIS Integration | Aeries REST API → Python sync script | Student rosters, class assignments, house membership |
 | Sheet Sync | Python script via GitHub Actions | Bidirectional sync with existing Google Sheet during transition |
@@ -59,6 +59,10 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [x] SOAR eagle logo on login and header
 - [x] Custom house crest assets (Canva/Adobe)
 
+### Phase 1.7 — Staff Point History
+- [x] Staff can view their own awarded points
+- [x] Staff can soft-delete their own points (mistake correction)
+
 ### Phase 2 — Student Integration
 - [ ] Aeries roster sync (Python script, scheduled)
 - [ ] Individual student point assignment
@@ -70,7 +74,6 @@ The sheet sync will be retired once app-based reporting is fully built out.
 
 ### Phase 3 — Sheet Sync & Staff Features
 - [ ] Bidirectional Google Sheet sync (Python + GitHub Actions)
-- [ ] Staff personal point history with soft-delete
 - [ ] Optional category and notes on point entry
 - [ ] Live leaderboard (Supabase real-time subscriptions)
 
