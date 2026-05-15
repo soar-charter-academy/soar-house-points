@@ -4,8 +4,8 @@ A house points tracking app for SOAR Charter Academy. Staff award points to five
 
 ## Design Tenets
 
-- **One-tap point giving.** The core interaction is: open app → tap house → point recorded. No confirmation dialogs, no required fields. Category, notes, and student selection are always optional.
-- **Optimistic UI.** The interface updates instantly on tap. Database writes happen in the background. This also lays the groundwork for offline support in the native app.
+- **Fast point giving.** The core interaction is: open app → tap house → confirm. A detail modal appears with optional student name and notes fields, but the confirm button is prominent and immediate — two taps from open to recorded with no required fields.
+- **Optimistic UI.** The interface updates instantly on confirm. Database writes happen in the background. This also lays the groundwork for offline support in the native app.
 - **Append-only points log.** Points are never edited. Mistakes are corrected via soft delete (staff can remove their own points from a personal history view). Full audit trail is preserved.
 - **No negative points.** The `value` field enforces `> 0` at the database level.
 
@@ -73,6 +73,7 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [ ] Staff personal point history with soft-delete
 - [ ] Optional category and notes on point entry
 - [ ] Live leaderboard (Supabase real-time subscriptions)
+
 
 ### Phase 3.5 Branding Improvements 
 - [ ] House-colored UI theming throughout
