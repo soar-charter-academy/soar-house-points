@@ -9,6 +9,96 @@ A house points tracking app for SOAR Charter Academy. Staff award points to five
 - **Append-only points log.** Points are never edited. Mistakes are corrected via soft delete (staff can remove their own points from a personal history view). Full audit trail is preserved.
 - **No negative points.** The `value` field enforces `> 0` at the database level.
 
+## How to Use
+
+### For Staff (Giving Points)
+
+1. Go to [soarpoints.netlify.app](https://soarpoints.netlify.app)
+2. Click **Sign in with Google** using your `@soarcharteracademy.org` account
+3. Tap a house button to award a point
+4. In the confirmation modal, optionally add a student name and/or notes, then tap **Confirm**
+5. The +1 animation confirms the point was recorded
+
+### Viewing and Removing Your Points
+
+1. Tap the **HOUSE POINTS** button in the header
+2. Your awarded points appear in reverse chronological order with house, value, date, and notes
+3. Tap **Remove** on any point to soft-delete it (corrects mistakes)
+4. Tap **← Back** to return to the house buttons
+
+### For Admins (Sync Scripts)
+
+All sync scripts live in the `sync/` folder and require a `.env` file with Supabase and Google credentials. Run from the project root.
+
+#### Import Staff from Roster
+
+Creates Supabase accounts for staff who have given points. Uses `sync/staff_roster.csv` for name-to-email mapping and cross-references the Google Sheet to only import active point-givers.
+
+```bash
+python3.12 sync/import_staff.py
+```
+
+#### Sync Google Sheet → Supabase
+
+Imports historical points from the Google Sheet into the database. Each sheet row is expanded into individual point entries per house. Rows are marked with a sync ID in column I to prevent duplicate imports. Safe to run repeatedly.
+
+```bash
+python3.12 sync/sheet_sync.py to-db
+```
+
+#### Sync Supabase → Google Sheet
+
+Appends app-created points back to the Google Sheet for continuity during the transition period. Only syncs points with `source='app'` that haven't been written to the sheet yet.
+
+```bash
+python3.12 sync/sheet_sync.py to-sheet
+```
+
+#### Run Both Directions
+
+```bash
+python3.12 sync/sheet_sync.py
+```
+
+#### Cleanup Staff (Destructive)
+
+Removes all Supabase auth users and their associated data except for protected accounts. Used during setup to reset and re-import.
+
+```bash
+python3.12 sync/cleanup_staff.py
+```
+
+#### Test Connections
+
+```bash
+python3.12 sync/test_sheet.py        # Verify Google Sheets API access
+python3.12 sync/test_connection.py   # Test Aeries OneRoster API (pending auth fix)
+```
+
+### Required Environment Variables
+
+Create a `.env` file in the project root (never committed to git):
+
+    VITE_SUPABASE_URL=https://your-project.supabase.co
+    VITE_SUPABASE_ANON_KEY=your_publishable_key
+    SUPABASE_SERVICE_KEY=your_secret_service_role_key
+    AERIES_ONEROSTER_URL=https://your-aeries-instance
+    AERIES_CLIENT_ID=your_oneroster_consumer_id
+    AERIES_CLIENT_SECRET=your_oneroster_consumer_secret
+
+### Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+Runs at `http://localhost:5173`. Changes hot-reload automatically.
+
+### Database Migrations
+
+Schema changes are saved as numbered SQL files in `migrations/`. Run them in order against the Supabase SQL Editor when setting up a fresh database:
+
 ## Architecture
 
 ### Tech Stack
@@ -74,8 +164,10 @@ The sheet sync will be retired once app-based reporting is fully built out.
 
 ### Phase 3 — Sheet Sync & Staff Features
 - [ ] Bidirectional Google Sheet sync (Python + GitHub Actions)
-- [ ] Optional category and notes on point entry
+- [x] Optional category and notes on point entry
+- [ ] Point value selector in modal (+/- stepper with tappable editable number field, default 1)
 - [ ] Live leaderboard (Supabase real-time subscriptions)
+- [ ] Select and remove multiple points from My Points screen
 
 
 ### Phase 3.5 Branding Improvements 
@@ -105,11 +197,3 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [ ] CI/CD with GitHub Actions
 - [ ] Automated tests
 
-## Local Development
-
-```bash
-npm install
-npm run dev
-```
-
-Runs at `http://localhost:5173`. Requires a `.env` file with Supabase credentials (see `.env.example`).
