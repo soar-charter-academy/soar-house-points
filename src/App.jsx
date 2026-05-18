@@ -54,27 +54,28 @@ function FloatingPoint({ onDone }) {
 // On tap: records the point (via onTap), shows a
 // floating "+1", and plays a press animation.
 
-function HouseButton({ house, onTap }) {
+function HouseButton({ house, onTap, popTrigger = 0 }) {
   const [pops, setPops] = useState([])     // Active "+1" animations
   const [pressed, setPressed] = useState(false) // Press animation state
   const nextId = useRef(0)                 // Unique ID counter for animations
 
   const handleTap = useCallback(() => {
-    onTap(house.id) // Record the point to Supabase
-
-    // Spawn a new "+1" animation
-    const id = nextId.current++
-    setPops((p) => [...p, id])
-
-    // Brief scale-down for tactile press feedback
-    setPressed(true)
-    setTimeout(() => setPressed(false), 120)
+    onTap(house.id)
   }, [house.id, onTap])
 
   // Remove a "+1" animation after it finishes
   const removePop = useCallback((id) => {
     setPops((p) => p.filter((x) => x !== id))
   }, [])
+
+  useEffect(() => {
+    if (popTrigger > 0) {
+      const id = nextId.current++
+      setPops((p) => [...p, id])
+      setPressed(true)
+      setTimeout(() => setPressed(false), 120)
+    }
+  }, [popTrigger])
 
   return (
     <button
@@ -464,6 +465,7 @@ function App() {
   const [loading, setLoading] = useState(true)    // Initial auth check
   const [view, setView] = useState('board')    // 'board' or 'history'
   const [selectedHouse, setSelectedHouse] = useState(null) // house object for modal
+  const [confirmedPops, setConfirmedPops] = useState({})
 
   useEffect(() => {
     const link = document.createElement('link')
@@ -545,7 +547,10 @@ function App() {
       })
 
     if (error) console.error('Failed to record point:', error.message)
-
+    setConfirmedPops((prev) => ({
+      ...prev,
+      [selectedHouse.id]: (prev[selectedHouse.id] || 0) + 1,
+    }))  
     setSelectedHouse(null) // close modal
   }
 
@@ -673,7 +678,7 @@ function App() {
           }}
         >
           {houses.slice(0, 4).map((house) => (
-            <HouseButton key={house.id} house={house} onTap={handleHouseTap}/>
+            <HouseButton key={house.id} house={house} onTap={handleHouseTap} popTrigger={confirmedPops[house.id] || 0} />
           ))}
         </div>
 
@@ -682,7 +687,7 @@ function App() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
             <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center' }}>
               <div style={{ width: 'calc(50% - 6px)' }}>
-                <HouseButton house={houses[4]} onTap={handleHouseTap} />
+                <HouseButton house={houses[4]} onTap={handleHouseTap} popTrigger={confirmedPops[houses[4].id] || 0} />
               </div>
             </div>
           </div>
