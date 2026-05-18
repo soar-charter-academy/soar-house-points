@@ -163,7 +163,7 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [ ] Award points from roster view
 
 ### Phase 3 — Sheet Sync & Staff Features
-- [ ] Bidirectional Google Sheet sync (Python + GitHub Actions)
+- [x] Bidirectional Google Sheet sync (Python + GitHub Actions)
 - [x] Optional category and notes on point entry
 - [ ] Point value selector in modal (+/- stepper with tappable editable number field, default 1)
 - [ ] Live leaderboard (Supabase real-time subscriptions)
