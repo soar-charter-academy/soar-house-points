@@ -97,7 +97,7 @@ Runs at `http://localhost:5173`. Changes hot-reload automatically.
 
 ### Database Migrations
 
-Schema changes are saved as numbered SQL files in `migrations/`. Run them in order against the Supabase SQL Editor when setting up a fresh database:
+Schema changes are saved as numbered SQL files in `migrations/`. Run them in order against the Supabase SQL Editor when setting up a fresh database.
 
 ## Architecture
 
