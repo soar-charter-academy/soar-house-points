@@ -26,3 +26,7 @@ dist-ssr
 
 .env
 sync/service-account.json
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+sync/staff_roster.csv
