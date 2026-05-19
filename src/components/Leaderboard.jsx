@@ -69,16 +69,15 @@ function Leaderboard() {
             }}
           >
             {/* Rank */}
-            <span style={{
-              fontFamily: "'Russo One', sans-serif",
-              fontSize: 18,
-              color: index === 0 ? '#FFD700' : index === 1 ? '#AAA' : index === 2 ? '#CD7F32' : '#ddd',
-              width: 24,
-              textAlign: 'center',
-              flexShrink: 0,
-            }}>
-              {index + 1}
-            </span>
+            <div style={{ width: 40, flexShrink: 0, textAlign: 'center' }}>
+              {index < 3 ? (
+                <img
+                  src={`/images/${['first', 'second', 'third'][index]}.png`}
+                  alt={`${index + 1}${['st', 'nd', 'rd'][index]} place`}
+                  style={{ width: 40, height: 40, objectFit: 'contain' }}
+                />
+              ) : null}
+            </div>
 
             {/* House crest mini */}
             <img
