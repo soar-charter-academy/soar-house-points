@@ -49,6 +49,14 @@ resource "google_project_service" "drive" {
   service = "drive.googleapis.com"
 }
 
+resource "google_project_service" "firebase" {
+  service = "firebase.googleapis.com"
+}
+
+resource "google_project_service" "firebasehosting" {
+  service = "firebasehosting.googleapis.com"
+}
+
 # ============================================
 # Service Account for sheet sync
 # ============================================

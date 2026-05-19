@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "soar-house-points"
+  },
+  "targets": {
+    "soar-house-points": {
+      "hosting": {
+        "soarpoints": [
+          "soarpoints"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

@@ -79,19 +79,6 @@ function Leaderboard() {
               ) : null}
             </div>
 
-            {/* House crest mini */}
-            <img
-              src={`/images/${house.house_name.toLowerCase()}.png`}
-              alt={house.house_name}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                objectFit: 'cover',
-                flexShrink: 0,
-              }}
-            />
-
             {/* Name and bar */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{

@@ -166,7 +166,7 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [x] Bidirectional Google Sheet sync (Python + GitHub Actions)
 - [x] Optional category and notes on point entry
 - [x] Point value selector in modal (+/- stepper with tappable editable number field, default 1)
-- [ ] Live leaderboard (Supabase real-time subscriptions)
+- [x] Live leaderboard (Supabase real-time subscriptions)
 - [ ] Select and remove multiple points from My Points screen
 
 
@@ -193,7 +193,7 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [ ] Parent view: child's points and house standing
 
 ### Phase 6 — Production Hardening (Optional)
-- [ ] Terraform infrastructure-as-code
+- [x] Terraform infrastructure-as-code
 - [ ] CI/CD with GitHub Actions
 - [ ] Automated tests
 
