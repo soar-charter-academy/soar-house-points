@@ -1,0 +1,139 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabase'
+
+// ============================================
+// Leaderboard — live house point standings
+// ============================================
+// Shows ranked houses with point totals and
+// percentage bars. Updates in real-time when
+// points are added or removed.
+
+function Leaderboard() {
+  const [totals, setTotals] = useState([])
+
+  async function fetchTotals() {
+    const { data, error } = await supabase.rpc('get_house_totals')
+    if (error) {
+      console.error('Failed to fetch totals:', error.message)
+    } else {
+      setTotals(data)
+    }
+  }
+
+  useEffect(() => {
+    fetchTotals()
+
+    // Subscribe to real-time changes on the points table
+    const channel = supabase
+      .channel('points-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'points' },
+        () => fetchTotals()
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  const maxPoints = Math.max(...totals.map((t) => t.total_points), 1)
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <h2 style={{
+        fontFamily: "'Russo One', sans-serif",
+        fontSize: 14,
+        fontWeight: 400,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: '#888',
+        marginBottom: 12,
+        textAlign: 'center',
+      }}>
+        Leaderboard
+      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {totals.map((house, index) => (
+          <div
+            key={house.house_id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '10px 14px',
+              background: '#fff',
+              borderRadius: 10,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            }}
+          >
+            {/* Rank */}
+            <span style={{
+              fontFamily: "'Russo One', sans-serif",
+              fontSize: 18,
+              color: index === 0 ? '#FFD700' : index === 1 ? '#AAA' : index === 2 ? '#CD7F32' : '#ddd',
+              width: 24,
+              textAlign: 'center',
+              flexShrink: 0,
+            }}>
+              {index + 1}
+            </span>
+
+            {/* House crest mini */}
+            <img
+              src={`/images/${house.house_name.toLowerCase()}.png`}
+              alt={house.house_name}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                objectFit: 'cover',
+                flexShrink: 0,
+              }}
+            />
+
+            {/* Name and bar */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 13,
+                fontWeight: 700,
+                marginBottom: 4,
+              }}>
+                {house.house_name}
+              </div>
+              <div style={{
+                height: 6,
+                borderRadius: 3,
+                background: '#eee',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${(house.total_points / maxPoints) * 100}%`,
+                  background: house.color_hex,
+                  borderRadius: 3,
+                  transition: 'width 0.5s ease',
+                }} />
+              </div>
+            </div>
+
+            {/* Points total */}
+            <span style={{
+              fontFamily: "'Russo One', sans-serif",
+              fontSize: 18,
+              color: house.color_hex,
+              flexShrink: 0,
+              minWidth: 40,
+              textAlign: 'right',
+            }}>
+              {house.total_points}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default Leaderboard
