@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import PointRow from './PointRow'
 
 // ============================================
 // PointHistory — staff's own awarded points
 // ============================================
-// Shows a chronological list of points the current
-// staff member has given, with soft-delete capability.
 
 function PointHistory({ staffId, houses, onBack }) {
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState(new Set())
+  const [selected, setSelected] = useState(new Set())
 
-  // Build a lookup map: house_id → house object
   const houseMap = {}
   houses.forEach((h) => { houseMap[h.id] = h })
 
@@ -36,10 +35,25 @@ function PointHistory({ staffId, houses, onBack }) {
     setLoading(false)
   }
 
-  async function deletePoint(pointId) {
-    // Start fade-out animation
-    setRemoving((prev) => new Set(prev).add(pointId))
+  function toggleSelect(pointId) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(pointId)) next.delete(pointId)
+      else next.add(pointId)
+      return next
+    })
+  }
 
+  function toggleSelectAll() {
+    if (selected.size === points.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(points.map((p) => p.id)))
+    }
+  }
+
+  async function deletePoint(pointId) {
+    setRemoving((prev) => new Set(prev).add(pointId))
     const { error } = await supabase
       .from('points')
       .update({ deleted_at: new Date().toISOString() })
@@ -47,32 +61,36 @@ function PointHistory({ staffId, houses, onBack }) {
 
     if (error) {
       console.error('Failed to delete point:', error.message)
-      // Undo animation if it failed
-      setRemoving((prev) => {
-        const next = new Set(prev)
-        next.delete(pointId)
-        return next
-      })
+      setRemoving((prev) => { const next = new Set(prev); next.delete(pointId); return next })
     } else {
-      // Wait for animation to finish, then remove from list
       setTimeout(() => {
         setPoints((prev) => prev.filter((p) => p.id !== pointId))
-        setRemoving((prev) => {
-          const next = new Set(prev)
-          next.delete(pointId)
-          return next
-        })
+        setRemoving((prev) => { const next = new Set(prev); next.delete(pointId); return next })
       }, 400)
     }
   }
 
-  function formatDate(dateStr) {
-    const d = new Date(dateStr)
-    return d.toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric',
-      hour: 'numeric', minute: '2-digit',
-    })
+  async function deleteSelected() {
+    const ids = Array.from(selected)
+    setRemoving(new Set(ids))
+    const { error } = await supabase
+      .from('points')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids)
+
+    if (error) {
+      console.error('Failed to delete points:', error.message)
+      setRemoving(new Set())
+    } else {
+      setTimeout(() => {
+        setPoints((prev) => prev.filter((p) => !ids.includes(p.id)))
+        setRemoving(new Set())
+        setSelected(new Set())
+      }, 400)
+    }
   }
+
+  const hasSelection = selected.size > 0
 
   return (
     <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
@@ -83,20 +101,40 @@ function PointHistory({ staffId, houses, onBack }) {
           <button
             onClick={onBack}
             style={{
-              padding: '8px 16px',
-              fontSize: 14,
-              fontWeight: 600,
-              background: 'none',
-              border: '1px solid #ccc',
-              borderRadius: 8,
-              cursor: 'pointer',
-              color: '#666',
+              padding: '8px 16px', fontSize: 14, fontWeight: 600,
+              background: 'none', border: '1px solid #ccc',
+              borderRadius: 8, cursor: 'pointer', color: '#666',
             }}
           >
             ← Back
           </button>
           <h1 style={{ fontSize: 18, fontWeight: 700 }}>My Points</h1>
-          <div style={{ width: 70 }} /> {/* Spacer for alignment */}
+          {hasSelection ? (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button
+                onClick={toggleSelectAll}
+                style={{
+                  padding: '6px 8px', fontSize: 11,
+                  background: 'none', border: '1px solid #ccc',
+                  borderRadius: 6, cursor: 'pointer', color: '#666',
+                }}
+              >
+                {selected.size === points.length ? 'None' : 'All'}
+              </button>
+              <button
+                onClick={deleteSelected}
+                style={{
+                  padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                  background: '#dc3545', color: '#fff',
+                  border: 'none', borderRadius: 8, cursor: 'pointer',
+                }}
+              >
+                Remove ({selected.size})
+              </button>
+            </div>
+          ) : (
+            <div style={{ width: 70 }} />
+          )}
         </div>
 
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
@@ -109,73 +147,17 @@ function PointHistory({ staffId, houses, onBack }) {
 
         {/* Points list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {points.map((point) => {
-            const house = houseMap[point.house_id]
-            return (
-              <div
-                key={point.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '12px 16px',
-                  background: '#fff',
-                  borderRadius: 12,
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                  opacity: removing.has(point.id) ? 0 : 1,
-                  transform: removing.has(point.id) ? 'translateX(60px)' : 'translateX(0)',
-                  maxHeight: removing.has(point.id) ? '0px' : '80px',
-                  padding: removing.has(point.id) ? '0px 16px' : '12px 16px',
-                  marginBottom: removing.has(point.id) ? '-8px' : '0px',
-                  overflow: 'hidden',
-                  transition: 'opacity 0.3s ease, transform 0.3s ease, max-height 0.4s ease 0.1s, padding 0.4s ease 0.1s, margin-bottom 0.4s ease 0.1s',
-                }}
-              >
-                {/* House color dot */}
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: '50%',
-                    background: house ? house.color_hex : '#ccc',
-                    flexShrink: 0,
-                  }}
-                />
-
-                {/* Point details */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>
-                    {house ? house.name : 'Unknown'} +{point.value}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#888' }}>
-                    {formatDate(point.created_at)}
-                  </div>
-                  {point.notes && (
-                    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
-                      {point.notes}
-                    </div>
-                  )}
-                </div>
-
-                {/* Delete button */}
-                <button
-                  onClick={() => deletePoint(point.id)}
-                  style={{
-                    padding: '6px 10px',
-                    fontSize: 11,
-                    background: 'none',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    color: '#999',
-                    flexShrink: 0,
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            )
-          })}
+          {points.map((point) => (
+            <PointRow
+              key={point.id}
+              point={point}
+              house={houseMap[point.house_id]}
+              isSelected={selected.has(point.id)}
+              isRemoving={removing.has(point.id)}
+              onToggle={() => toggleSelect(point.id)}
+              onDelete={() => deletePoint(point.id)}
+            />
+          ))}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 # SOAR House Points
 
-A house points tracking app for SOAR Charter Academy. Staff award points to five houses — Kiburi, Fierté, Orgullo, Supurbia, and Hokori — with a one-tap mobile interface backed by a real-time database.
+A house points tracking app for SOAR Charter Academy. Staff award points to five houses — Kiburi, Fierte, Orgullo, Supurbia, and Hokori — with a one-tap mobile interface backed by a real-time database.
 
 ## Design Tenets
 
@@ -13,7 +13,7 @@ A house points tracking app for SOAR Charter Academy. Staff award points to five
 
 ### For Staff (Giving Points)
 
-1. Go to [soarpoints.netlify.app](https://soarpoints.netlify.app)
+1. Go to [soarpoints.web.app](https://soarpoints.web.app)
 2. Click **Sign in with Google** using your `@soarcharteracademy.org` account
 3. Tap a house button to award a point
 4. In the confirmation modal, optionally add a student name and/or notes, then tap **Confirm**
@@ -108,8 +108,8 @@ Schema changes are saved as numbered SQL files in `migrations/`. Run them in ord
 | Frontend | React (Vite) | Mobile-first web app |
 | Backend / DB | Supabase (PostgreSQL) | Auth, REST API, real-time subscriptions, row-level security |
 | Auth | Google SSO via Supabase Auth | Restricted to `@soarcharteracademy.org` domain |
-| Hosting | Netlify | Free tier, push-to-deploy from GitHub |
-| Mobile | Expo / React Native (planned) | iOS and Android app store deployment |
+| Hosting | Firebase Hosting | Free tier, auto-deploys via GitHub Actions, GCP ecosystem |
+| Mobile | PWA (Progressive Web App) | Installable from browser, no app store maintenance |
 | SIS Integration | Aeries REST API → Python sync script | Student rosters, class assignments, house membership |
 | Sheet Sync | Python script via GitHub Actions | Bidirectional sync with existing Google Sheet during transition |
 
@@ -143,7 +143,7 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [x] Google SSO authentication
 - [x] House buttons UI (2×2 grid + 1, one-tap point giving)
 - [x] Points written to Supabase on tap
-- [x] Deploy to Netlify
+- [x] Deploy (Firebase Hosting via GitHub Actions)
 
 ### Phase 1.5 — Branding & Visual Identity
 - [x] SOAR eagle logo on login and header
@@ -168,6 +168,7 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [x] Point value selector in modal (+/- stepper with tappable editable number field, default 1)
 - [x] Live leaderboard (Supabase real-time subscriptions)
 - [ ] Select and remove multiple points from My Points screen
+- [ ] Desktop-friendly interface for non-mobile use
 
 
 ### Phase 3.5 Branding Improvements 
@@ -182,6 +183,7 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [ ] Individual student point history
 - [ ] Exportable reports for discipline support
 - [ ] Daily/weekly/monthly breakdowns
+- [ ] Student profile pages (house, total points, award history)
 
 ### Phase 5 — PWA & Offline
 - [ ] PWA manifest and service worker
@@ -194,6 +196,6 @@ The sheet sync will be retired once app-based reporting is fully built out.
 
 ### Phase 6 — Production Hardening (Optional)
 - [x] Terraform infrastructure-as-code
-- [ ] CI/CD with GitHub Actions
+- [x] CI/CD with GitHub Actions (Firebase deploy + sheet sync)
 - [ ] Automated tests
 
