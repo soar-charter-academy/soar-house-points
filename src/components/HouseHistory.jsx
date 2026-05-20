@@ -35,14 +35,14 @@ function HouseHistory({ house, currentUserId, onBack }) {
   }, [])
 
   async function fetchPoints() {
+    console.log('Fetching points for house:', house.id, house.name)
     const { data, error } = await supabase
       .from('points')
       .select('*')
       .eq('house_id', house.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
-      .limit(100)
-
+    console.log('Points result:', data?.length, error)
     if (error) {
       console.error('Failed to fetch house points:', error.message)
     } else {
@@ -72,6 +72,7 @@ function HouseHistory({ house, currentUserId, onBack }) {
   }
 
   const totalPoints = points.reduce((sum, p) => sum + p.value, 0)
+  console.log('Render state:', { loading, pointsCount: points.length, removingSize: removing.size })
 
   return (
     <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
@@ -123,16 +124,10 @@ function HouseHistory({ house, currentUserId, onBack }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                padding: removing.has(point.id) ? '0px 16px' : '12px 16px',
+                padding: '12px 16px',
                 background: '#fff',
                 borderRadius: 12,
                 boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                opacity: removing.has(point.id) ? 0 : 1,
-                transform: removing.has(point.id) ? 'translateX(60px)' : 'translateX(0)',
-                maxHeight: removing.has(point.id) ? '0px' : '80px',
-                marginBottom: removing.has(point.id) ? '-8px' : '0px',
-                overflow: 'hidden',
-                transition: 'opacity 0.3s ease, transform 0.3s ease, max-height 0.4s ease 0.1s, padding 0.4s ease 0.1s, margin-bottom 0.4s ease 0.1s',
               }}
             >
               <div style={{
