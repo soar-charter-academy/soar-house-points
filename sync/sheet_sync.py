@@ -234,6 +234,58 @@ def sync_supabase_to_sheet():
 
     print(f"\nDone! Synced to sheet: {synced}, Errors: {errors}")
 
+def sync_deletions_to_sheet():
+    """Remove rows from the sheet for points that were soft-deleted in the app."""
+    print("\n--- Syncing Deletions → Sheet ---\n")
+
+    ws = connect_sheet()
+    sb = connect_supabase()
+
+    # Find app points that were deleted after being synced to the sheet
+    result = sb.table('points') \
+        .select('id, sheet_synced_at') \
+        .eq('source', 'app') \
+        .not_.is_('deleted_at', 'null') \
+        .not_.is_('sheet_synced_at', 'null') \
+        .execute()
+
+    deleted_points = result.data
+    print(f"Found {len(deleted_points)} deleted points to remove from sheet\n")
+
+    if not deleted_points:
+        print("Nothing to sync.")
+        return
+
+    removed = 0
+    errors = 0
+
+    for point in deleted_points:
+        sync_marker = point['id'][:8]
+
+        try:
+            # Find the row with this sync marker in column I
+            cell = ws.find(sync_marker, in_column=9)
+
+            if cell:
+                ws.delete_rows(cell.row)
+                print(f"  Removed row {cell.row} (marker: {sync_marker})")
+                removed += 1
+            else:
+                print(f"  Marker {sync_marker} not found in sheet — skipping")
+
+            # Clear sheet_synced_at so we don't process this again
+            sb.table('points') \
+                .update({'sheet_synced_at': None}) \
+                .eq('id', point['id']) \
+                .execute()
+
+            time.sleep(1.5)  # Throttle
+        except Exception as e:
+            print(f"  Error removing {sync_marker}: {e}")
+            errors += 1
+
+    print(f"\nDone! Removed: {removed}, Errors: {errors}")
+
 if __name__ == '__main__':
     import sys
 
@@ -243,9 +295,11 @@ if __name__ == '__main__':
             sync_sheet_to_supabase()
         elif direction == 'to-sheet':
             sync_supabase_to_sheet()
+            sync_deletions_to_sheet()
         else:
             print("Usage: python sheet_sync.py [to-db|to-sheet]")
     else:
-        # Run both directions
+        # Run all directions
         sync_sheet_to_supabase()
         sync_supabase_to_sheet()
+        sync_deletions_to_sheet()
