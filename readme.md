@@ -167,9 +167,9 @@ The sheet sync will be retired once app-based reporting is fully built out.
 - [x] Optional category and notes on point entry
 - [x] Point value selector in modal (+/- stepper with tappable editable number field, default 1)
 - [x] Live leaderboard (Supabase real-time subscriptions)
-- [ ] Select and remove multiple points from My Points screen
+- [x] Select and remove multiple points from My Points screen
 - [ ] Desktop-friendly interface for non-mobile use
-
+- [ ] More than 5 points extra confirmation dialogue
 
 ### Phase 3.5 Branding Improvements 
 - [ ] House-colored UI theming throughout

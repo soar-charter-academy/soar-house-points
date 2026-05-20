@@ -21,7 +21,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # ---- Configuration ----
 
-SHEET_NAME = "TEST SOAR House Points (Responses)"
+SHEET_NAME = "SOAR House Points (Responses)"
 WORKSHEET_NAME = "House Points"
 HEADER_ROW = 8
 DATA_START_ROW = 9

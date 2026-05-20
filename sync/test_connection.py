@@ -1,11 +1,10 @@
 """
 test_connection.py
-Narrow down the correct token request format for /admin/token.
+Aeries OneRoster API — OAuth 2.0 Client Credentials with form-data.
 """
 
 import os
 import json
-import base64
 from dotenv import load_dotenv
 import requests
 
@@ -15,70 +14,26 @@ BASE_URL = os.getenv('AERIES_ONEROSTER_URL')
 CLIENT_ID = os.getenv('AERIES_CLIENT_ID')
 CLIENT_SECRET = os.getenv('AERIES_CLIENT_SECRET')
 
-TOKEN_URL = f"{BASE_URL}/token"
-SCOPES = 'https://purl.imsglobal.org/spec/or/v1p1/scope/roster-core.readonly'
+# Step 1: Get token using multipart form-data
+token_url = f"{BASE_URL}/token"
+print(f"Requesting token from: {token_url}")
 
-print(f"Token URL: {TOKEN_URL}\n")
-
-# 1: No scope at all
-print("1) No scope, body auth")
-r = requests.post(TOKEN_URL, data={
-    'grant_type': 'client_credentials',
-    'client_id': CLIENT_ID,
-    'client_secret': CLIENT_SECRET,
+token_response = requests.post(token_url, files={
+    'client_id': (None, CLIENT_ID),
+    'client_secret': (None, CLIENT_SECRET),
+    'grant_type': (None, 'client_credentials'),
+    'scope': (None, 'https://purl.imsglobal.org/spec/or/v1p1/scope/roster-core.readonly'),
 })
-print(f"   {r.status_code} {r.text[:200]}\n")
 
-# 2: Basic auth header, no scope
-print("2) No scope, Basic auth header")
-creds = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
-r = requests.post(TOKEN_URL, headers={
-    'Authorization': f'Basic {creds}',
-    'Content-Type': 'application/x-www-form-urlencoded',
-}, data={'grant_type': 'client_credentials'})
-print(f"   {r.status_code} {r.text[:200]}\n")
+print(f"Token status: {token_response.status_code}")
 
-# 3: Basic auth with scope
-print("3) Basic auth + scope")
-r = requests.post(TOKEN_URL, headers={
-    'Authorization': f'Basic {creds}',
-    'Content-Type': 'application/x-www-form-urlencoded',
-}, data={
-    'grant_type': 'client_credentials',
-    'scope': SCOPES,
-})
-print(f"   {r.status_code} {r.text[:200]}\n")
+if token_response.status_code != 200:
+    print(f"Token error: {token_response.text[:500]}")
+    exit(1)
 
-# 4: JSON body instead of form data
-print("4) JSON body")
-r = requests.post(TOKEN_URL, json={
-    'grant_type': 'client_credentials',
-    'client_id': CLIENT_ID,
-    'client_secret': CLIENT_SECRET,
-    'scope': SCOPES,
-})
-print(f"   {r.status_code} {r.text[:200]}\n")
-
-# 5: Try consumer_key/consumer_secret naming
-print("5) consumer_key/consumer_secret naming")
-r = requests.post(TOKEN_URL, data={
-    'grant_type': 'client_credentials',
-    'consumer_key': CLIENT_ID,
-    'consumer_secret': CLIENT_SECRET,
-    'scope': SCOPES,
-})
-print(f"   {r.status_code} {r.text[:200]}\n")
-
-# 6: Basic auth, JSON body, with scope
-print("6) Basic auth + JSON body + scope")
-r = requests.post(TOKEN_URL, headers={
-    'Authorization': f'Basic {creds}',
-    'Content-Type': 'application/json',
-}, json={
-    'grant_type': 'client_credentials',
-    'scope': SCOPES,
-})
-print(f"   {r.status_code} {r.text[:200]}\n")
+token_data = token_response.json()
+access_token = token_data['access_token']
+print(f"Token acquired!\n")
 
 # Step 2: Fetch students
 students_url = f"{BASE_URL}/ims/oneroster/v1p1/students"
@@ -95,10 +50,17 @@ print(f"API status: {api_response.status_code}\n")
 if api_response.status_code == 200:
     data = api_response.json()
     if 'users' in data:
-        print(f"Found students! Showing first record structure:")
-        print(json.dumps(data['users'][0], indent=2))
+        # Redact student names for safety
+        student = data['users'][0]
+        print("First student structure (keys only):")
+        print(json.dumps(list(student.keys()), indent=2))
+        print("\nFull record (check for house field):")
+        # Redact name fields
+        safe = {k: v for k, v in student.items()}
+        safe['givenName'] = '[REDACTED]'
+        safe['familyName'] = '[REDACTED]'
+        print(json.dumps(safe, indent=2))
     else:
         print(f"Response keys: {list(data.keys())}")
-        print(json.dumps(data, indent=2)[:500])
 else:
     print(f"Error: {api_response.text[:500]}")
