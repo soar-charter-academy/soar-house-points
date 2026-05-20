@@ -8,7 +8,7 @@ import { supabase } from '../supabase'
 // percentage bars. Updates in real-time when
 // points are added or removed.
 
-function Leaderboard() {
+function Leaderboard({ onHouseTap }) {
   const [totals, setTotals] = useState([])
 
   async function fetchTotals() {
@@ -58,6 +58,11 @@ function Leaderboard() {
         {totals.map((house, index) => (
           <div
             key={house.house_id}
+            onClick={() => onHouseTap && onHouseTap({
+              id: house.house_id,
+              name: house.house_name,
+              color_hex: house.color_hex,
+            })}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -66,6 +71,7 @@ function Leaderboard() {
               background: '#fff',
               borderRadius: 10,
               boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              cursor: 'pointer',
             }}
           >
             {/* Rank */}

@@ -12,10 +12,11 @@ to prevent duplicate imports.
 import os
 import uuid
 import time
+import gspread
 from datetime import datetime
 from dotenv import load_dotenv
-import gspread
 from supabase import create_client
+from zoneinfo import ZoneInfo
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
@@ -105,6 +106,7 @@ def sync_sheet_to_supabase():
         # Parse timestamp
         try:
             timestamp = datetime.strptime(timestamp_str, "%m/%d/%Y %H:%M:%S")
+            timestamp = timestamp.replace(tzinfo=ZoneInfo("America/Los_Angeles"))
             timestamp_iso = timestamp.isoformat()
         except ValueError:
             print(f"  Row {row_num}: Bad timestamp '{timestamp_str}' — skipping")

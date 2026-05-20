@@ -4,6 +4,7 @@ import HouseButton from './components/HouseButton'
 import PointModal from './components/PointModal'
 import PointHistory from './components/PointHistory'
 import Leaderboard from './components/Leaderboard'
+import HouseHistory from './components/HouseHistory'
 
 // ============================================
 // App — main application component
@@ -21,6 +22,8 @@ function App() {
   const [view, setView] = useState('board')    // 'board' or 'history'
   const [selectedHouse, setSelectedHouse] = useState(null) // house object for modal
   const [confirmedPops, setConfirmedPops] = useState({})
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [selectedHouseView, setSelectedHouseView] = useState(null)
 
   useEffect(() => {
     const link = document.createElement('link')
@@ -171,6 +174,17 @@ function App() {
     )
   }
 
+  // ---- Render: house history view ----
+  if (selectedHouseView) {
+    return (
+      <HouseHistory
+        house={selectedHouseView}
+        currentUserId={session.user.id}
+        onBack={() => setSelectedHouseView(null)}
+      />
+    )
+  }
+
   // ---- Render: view routing ----
   if (view === 'history') {
     return (
@@ -189,42 +203,75 @@ function App() {
     <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
       <div style={{ maxWidth: 400, margin: '0 auto' }}>
 
-        {/* Header with logo, House Points button, and sign out */}
+        {/* Header with logo and profile */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <img src="/images/logo.png" alt="SOAR" style={{ height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
-          <button
-            onClick={() => setView('history')}
-            style={{
-              padding: '8px 16px',
-              fontFamily: "'Russo One', sans-serif",
-              fontSize: 16,
-              fontWeight: 400,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              background: '#3a3a3a',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 10,
-              cursor: 'pointer',
-              boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
-            }}
-          >
-            HOUSE POINTS
-          </button>
-          <button
-            onClick={signOut}
-            style={{
-              padding: '6px 12px',
-              fontSize: 12,
-              background: 'none',
-              border: '1px solid #ccc',
-              borderRadius: 6,
-              cursor: 'pointer',
-              color: '#666',
-            }}
-          >
-            Sign out
-          </button>
+          <div style={{ position: 'relative' }}>
+            <div
+              onClick={() => setShowProfileMenu((prev) => !prev)}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: '#3a3a3a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#fff',
+                fontSize: 18,
+                fontWeight: 700,
+                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
+              }}
+            >
+              {profile.display_name ? profile.display_name.charAt(0).toUpperCase() : '?'}
+            </div>
+
+            {/* Dropdown menu */}
+            {showProfileMenu && (
+              <>
+                {/* Invisible backdrop to close menu */}
+                <div
+                  onClick={() => setShowProfileMenu(false)}
+                  style={{ position: 'fixed', inset: 0, zIndex: 50 }}
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: 48,
+                  right: 0,
+                  background: '#fff',
+                  borderRadius: 10,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                  overflow: 'hidden',
+                  zIndex: 51,
+                  minWidth: 160,
+                }}>
+                  <button
+                    onClick={() => { setShowProfileMenu(false); setView('history'); }}
+                    style={{
+                      display: 'block', width: '100%', padding: '12px 16px',
+                      fontSize: 14, fontWeight: 600, background: 'none',
+                      border: 'none', borderBottom: '1px solid #eee',
+                      cursor: 'pointer', textAlign: 'left', color: '#333',
+                    }}
+                  >
+                    My Points
+                  </button>
+                  <button
+                    onClick={() => { setShowProfileMenu(false); signOut(); }}
+                    style={{
+                      display: 'block', width: '100%', padding: '12px 16px',
+                      fontSize: 14, fontWeight: 600, background: 'none',
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      color: '#d33',
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* House buttons — first four in a 2×2 grid */}
@@ -251,7 +298,7 @@ function App() {
           </div>
         )}
 
-        <Leaderboard />
+        <Leaderboard onHouseTap={setSelectedHouseView} />
 
         {/* Point confirmation modal */}
         {selectedHouse && (
