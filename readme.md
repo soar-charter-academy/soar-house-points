@@ -1,201 +1,131 @@
 # SOAR House Points
 
-A house points tracking app for SOAR Charter Academy. Staff award points to five houses — Kiburi, Fierte, Orgullo, Supurbia, and Hokori — with a one-tap mobile interface backed by a real-time database.
+A house points tracking app for [SOAR Charter Academy](https://soarcharteracademy.org). Staff award points to five houses with a fast, mobile-first interface backed by a real-time database.
 
-## Design Tenets
+**[Live App](https://soarpoints.web.app)** · **[Project Board](https://github.com/orgs/soarautomation/projects/1)** · **[Issues](https://github.com/soarautomation/soar-house-points/issues)**
 
-- **Fast point giving.** The core interaction is: open app → tap house → confirm. A detail modal appears with optional student name and notes fields, but the confirm button is prominent and immediate — two taps from open to recorded with no required fields.
-- **Optimistic UI.** The interface updates instantly on confirm. Database writes happen in the background. This also lays the groundwork for offline support in the native app.
-- **Append-only points log.** Points are never edited. Mistakes are corrected via soft delete (staff can remove their own points from a personal history view). Full audit trail is preserved.
-- **No negative points.** The `value` field enforces `> 0` at the database level.
+![Screenshot of house buttons and leaderboard](docs/screenshot.png)
 
-## How to Use
+## Features
 
-### For Staff (Giving Points)
+- **One-tap point giving** — tap a house, optionally add student name and notes, confirm
+- **Real-time leaderboard** — updates live across all devices via Supabase subscriptions
+- **Point history** — staff view and manage their own points; tap any house to see its full history
+- **Google SSO** — staff sign in with school Google accounts; student accounts are blocked automatically
+- **Bidirectional sheet sync** — legacy Google Sheet stays current during transition, synced via GitHub Actions
+- **PWA** — installable to home screen on iOS and Android, no app store required
+- **Soft delete** — mistakes are corrected, never erased; full audit trail preserved
 
-1. Go to [soarpoints.web.app](https://soarpoints.web.app)
-2. Click **Sign in with Google** using your `@soarcharteracademy.org` account
-3. Tap a house button to award a point
-4. In the confirmation modal, optionally add a student name and/or notes, then tap **Confirm**
-5. The +1 animation confirms the point was recorded
+## Tech Stack
 
-### Viewing and Removing Your Points
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React (Vite) |
+| Backend | Supabase (PostgreSQL, Auth, REST API, Realtime) |
+| Hosting | Firebase Hosting |
+| CI/CD | GitHub Actions (auto-deploy on push, scheduled sheet sync) |
+| Infrastructure | Terraform (GCP project, APIs, service accounts) |
+| Sync Scripts | Python (Google Sheets API, Aeries OneRoster API) |
 
-1. Tap the **HOUSE POINTS** button in the header
-2. Your awarded points appear in reverse chronological order with house, value, date, and notes
-3. Tap **Remove** on any point to soft-delete it (corrects mistakes)
-4. Tap **← Back** to return to the house buttons
+## Architecture
 
-### For Admins (Sync Scripts)
+The app is a static React frontend that talks directly to Supabase. No custom backend server — Supabase provides the database, authentication, auto-generated REST API, and real-time subscriptions. Row-level security policies enforce that staff can only modify their own points.
 
-All sync scripts live in the `sync/` folder and require a `.env` file with Supabase and Google credentials. Run from the project root.
+A Python sync script runs on a GitHub Actions schedule to keep the legacy Google Sheet bidirectionally synced with the database during the transition period. A separate sync pipeline (in progress) connects to the Aeries SIS via OneRoster API for student roster data.
 
-#### Import Staff from Roster
+Infrastructure is codified in Terraform, managing the GCP project, enabled APIs, service accounts, IAM roles, and Firebase Hosting.
 
-Creates Supabase accounts for staff who have given points. Uses `sync/staff_roster.csv` for name-to-email mapping and cross-references the Google Sheet to only import active point-givers.
+## Getting Started
 
-```bash
-python3.12 sync/import_staff.py
-```
+### Prerequisites
 
-#### Sync Google Sheet → Supabase
-
-Imports historical points from the Google Sheet into the database. Each sheet row is expanded into individual point entries per house. Rows are marked with a sync ID in column I to prevent duplicate imports. Safe to run repeatedly.
-
-```bash
-python3.12 sync/sheet_sync.py to-db
-```
-
-#### Sync Supabase → Google Sheet
-
-Appends app-created points back to the Google Sheet for continuity during the transition period. Only syncs points with `source='app'` that haven't been written to the sheet yet.
-
-```bash
-python3.12 sync/sheet_sync.py to-sheet
-```
-
-#### Run Both Directions
-
-```bash
-python3.12 sync/sheet_sync.py
-```
-
-#### Cleanup Staff (Destructive)
-
-Removes all Supabase auth users and their associated data except for protected accounts. Used during setup to reset and re-import.
-
-```bash
-python3.12 sync/cleanup_staff.py
-```
-
-#### Test Connections
-
-```bash
-python3.12 sync/test_sheet.py        # Verify Google Sheets API access
-python3.12 sync/test_connection.py   # Test Aeries OneRoster API (pending auth fix)
-```
-
-### Required Environment Variables
-
-Create a `.env` file in the project root (never committed to git):
-
-    VITE_SUPABASE_URL=https://your-project.supabase.co
-    VITE_SUPABASE_ANON_KEY=your_publishable_key
-    SUPABASE_SERVICE_KEY=your_secret_service_role_key
-    AERIES_ONEROSTER_URL=https://your-aeries-instance
-    AERIES_CLIENT_ID=your_oneroster_consumer_id
-    AERIES_CLIENT_SECRET=your_oneroster_consumer_secret
+- Node.js 18+
+- Python 3.12
+- A Supabase project
+- A Google Cloud project with Sheets and Drive APIs enabled
 
 ### Local Development
 
 ```bash
+git clone https://github.com/soarautomation/soar-house-points.git
+cd soar-house-points
 npm install
 npm run dev
 ```
 
-Runs at `http://localhost:5173`. Changes hot-reload automatically.
+Create a `.env` file in the project root:
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_publishable_key
+SUPABASE_SERVICE_KEY=your_service_role_key
+AERIES_ONEROSTER_URL=https://your-aeries-instance
+AERIES_CLIENT_ID=your_consumer_id
+AERIES_CLIENT_SECRET=your_consumer_secret
 
-### Database Migrations
+### Database Setup
 
-Schema changes are saved as numbered SQL files in `migrations/`. Run them in order against the Supabase SQL Editor when setting up a fresh database.
+Run the migration files in order against the Supabase SQL Editor:
+migrations/001_initial_schema.sql
+migrations/002_students_sections.sql
+migrations/003_add_source_column.sql
+migrations/004_fix_update_policy.sql
+migrations/005_sheet_sync_tracking.sql
+migrations/006_house_totals.sql
+migrations/007_go_live_reset.sql
+migrations/008_fix_sheet_timestamps.sql
+migrations/009_profiles_read_all.sql
 
-## Architecture
+### Sync Scripts
 
-### Tech Stack
+All scripts live in `sync/` and require the `.env` file and a Google service account key at `sync/service-account.json`.
 
-| Layer | Technology | Notes |
-|-------|-----------|-------|
-| Frontend | React (Vite) | Mobile-first web app |
-| Backend / DB | Supabase (PostgreSQL) | Auth, REST API, real-time subscriptions, row-level security |
-| Auth | Google SSO via Supabase Auth | Restricted to `@soarcharteracademy.org` domain |
-| Hosting | Firebase Hosting | Free tier, auto-deploys via GitHub Actions, GCP ecosystem |
-| Mobile | PWA (Progressive Web App) | Installable from browser, no app store maintenance |
-| SIS Integration | Aeries REST API → Python sync script | Student rosters, class assignments, house membership |
-| Sheet Sync | Python script via GitHub Actions | Bidirectional sync with existing Google Sheet during transition |
+| Command | Description |
+|---------|-------------|
+| `python3.12 sync/sheet_sync.py` | Run bidirectional sheet sync |
+| `python3.12 sync/sheet_sync.py to-db` | Sheet → database only |
+| `python3.12 sync/sheet_sync.py to-sheet` | Database → sheet only |
+| `python3.12 sync/import_staff.py` | Create Supabase accounts for staff who have given points |
+| `python3.12 sync/test_connection.py` | Test Aeries OneRoster API connection |
 
-### Database Schema (Supabase / PostgreSQL)
+### Terraform
 
-- **houses** — id, name, color_hex. Seeded with the five houses.
-- **profiles** — Linked to Supabase `auth.users`. Auto-created on first Google SSO login. Includes role (teacher, admin, aide).
-- **points** — Append-only log. References house, staff, and optionally student. Supports soft delete via `deleted_at`. Optional `category` and `notes` fields.
-- **quick_lists** — Staff-created named groups of students for fast access (e.g., "My 3rd period").
-- **quick_list_students** — Junction table linking quick lists to students.
-- **students** — Synced from Aeries SIS. Linked to house. `aeries_id` is the sync anchor.
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
 
-Row-level security enforces: staff can only insert points as themselves, can only soft-delete their own points, and all authenticated users can read non-deleted points and house data.
+Manages: GCP project APIs, service accounts, IAM roles, Firebase Hosting site.
 
-### Google Sheet Sync (Transition Period)
+## Project Structure
+src/
+App.jsx                 # Main app: auth, routing, state
+supabase.js             # Supabase client config
+components/
+HouseButton.jsx       # Tappable house tile with +N animation
+PointModal.jsx        # Confirmation dialog with value/notes
+PointHistory.jsx      # Staff's own point history with multi-select delete
+PointRow.jsx          # Single point entry in history
+HouseHistory.jsx      # Full point history for a house
+Leaderboard.jsx       # Live-updating ranked standings
+FloatingPoint.jsx     # +N floating animation
+sync/
+sheet_sync.py           # Bidirectional Google Sheet sync
+import_staff.py         # Bulk staff account creation
+test_connection.py      # Aeries API connectivity test
+cleanup_staff.py        # Reset staff accounts (destructive)
+terraform/
+main.tf                 # GCP infrastructure as code
+migrations/               # Numbered SQL schema changes
+public/images/            # House crests, logo, rank icons
 
-During the transition from the existing Google Sheet to the app, a bidirectional sync keeps both systems current:
+## Design Tenets
 
-- A `uuid` column in the sheet serves as the dedup key.
-- Sheet rows without a UUID are new → inserted into Supabase, UUID written back.
-- Supabase rows not in the sheet → appended to the sheet with their UUID.
-- Runs on a cron schedule via GitHub Actions (Python script, hourly during school hours).
-- A `source` column on the `points` table tracks whether each point originated from the app or the sheet.
+- **Fast point giving** — two taps from open to recorded, no required fields
+- **Optimistic UI** — interface updates instantly, database writes in background
+- **Append-only log** — points are never edited, only soft-deleted
+- **No negative points** — enforced at the database level
 
-The sheet sync will be retired once app-based reporting is fully built out.
+## License
 
-## Roadmap
-
-### Phase 1 — MVP (current)
-- [x] Supabase project and database schema
-- [x] Google SSO authentication
-- [x] House buttons UI (2×2 grid + 1, one-tap point giving)
-- [x] Points written to Supabase on tap
-- [x] Deploy (Firebase Hosting via GitHub Actions)
-
-### Phase 1.5 — Branding & Visual Identity
-- [x] SOAR eagle logo on login and header
-- [x] Custom house crest assets (Canva/Adobe)
-
-### Phase 1.7 — Staff Point History
-- [x] Staff can view their own awarded points
-- [x] Staff can soft-delete their own points (mistake correction)
-
-### Phase 2 — Student Integration
-- [ ] Aeries roster sync (Python script, scheduled)
-- [ ] Individual student point assignment
-- [ ] Student search
-- [ ] Custom quick lists
-- [ ] Class roster views
-- [ ] Section-based class rosters (synced from Aeries master schedule)
-- [ ] Award points from roster view
-
-### Phase 3 — Sheet Sync & Staff Features
-- [x] Bidirectional Google Sheet sync (Python + GitHub Actions)
-- [x] Optional category and notes on point entry
-- [x] Point value selector in modal (+/- stepper with tappable editable number field, default 1)
-- [x] Live leaderboard (Supabase real-time subscriptions)
-- [x] Select and remove multiple points from My Points screen
-- [ ] Desktop-friendly interface for non-mobile use
-- [ ] More than 5 points extra confirmation dialogue
-
-### Phase 3.5 Branding Improvements 
-- [ ] House-colored UI theming throughout
-- [ ] Polished "Hogwarts-y" aesthetic (textures, typography, animations)
-- [ ] Point-award animations and sound effects
-- [ ] Leaderboard visual treatment (banners, shields, etc.)
-
-### Phase 4 — Reporting
-- [ ] Points by house over time
-- [ ] Points by staff member
-- [ ] Individual student point history
-- [ ] Exportable reports for discipline support
-- [ ] Daily/weekly/monthly breakdowns
-- [ ] Student profile pages (house, total points, award history)
-
-### Phase 5 — PWA & Offline
-- [ ] PWA manifest and service worker
-- [ ] Installable to home screen (iOS and Android)
-- [ ] Offline support (local point queue + sync on reconnect)
-- [ ] Push notifications for milestones
-- [ ] Student/parent read-only access tier
-- [ ] Student dashboard: house totals, personal point history, streaks
-- [ ] Parent view: child's points and house standing
-
-### Phase 6 — Production Hardening (Optional)
-- [x] Terraform infrastructure-as-code
-- [x] CI/CD with GitHub Actions (Firebase deploy + sheet sync)
-- [ ] Automated tests
-
+MIT
