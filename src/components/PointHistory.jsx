@@ -44,14 +44,6 @@ function PointHistory({ staffId, houses, onBack }) {
     })
   }
 
-  function toggleSelectAll() {
-    if (selected.size === points.length) {
-      setSelected(new Set())
-    } else {
-      setSelected(new Set(points.map((p) => p.id)))
-    }
-  }
-
   async function deletePoint(pointId) {
     setRemoving((prev) => new Set(prev).add(pointId))
     const { error } = await supabase
@@ -111,16 +103,6 @@ function PointHistory({ staffId, houses, onBack }) {
           <h1 style={{ fontSize: 18, fontWeight: 700 }}>My Points</h1>
           {hasSelection ? (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button
-                onClick={toggleSelectAll}
-                style={{
-                  padding: '6px 8px', fontSize: 11,
-                  background: 'none', border: '1px solid #ccc',
-                  borderRadius: 6, cursor: 'pointer', color: '#666',
-                }}
-              >
-                {selected.size === points.length ? 'None' : 'All'}
-              </button>
               <button
                 onClick={deleteSelected}
                 style={{

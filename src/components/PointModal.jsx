@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // ============================================
 // PointModal — optional details before confirming
@@ -8,7 +8,31 @@ function PointModal({ house, onConfirm, onCancel }) {
   const [notes, setNotes] = useState('')
   const [studentName, setStudentName] = useState('')
   const [value, setValue] = useState(1)
+  const [confirmingLarge, setConfirmingLarge] = useState(false)
   const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'
+  
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Enter') {
+        if (value > 5 && !confirmingLarge) {
+          setConfirmingLarge(true)
+        } else {
+          onConfirm({
+            notes: notes.trim() || null,
+            studentName: studentName.trim() || null,
+            value: value,
+          })
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [value, notes, studentName, confirmingLarge, onConfirm])
+
+  function updateValue(newVal) {
+    setValue(newVal)
+    setConfirmingLarge(false)
+  }
 
   return (
     <div
@@ -73,7 +97,7 @@ function PointModal({ house, onConfirm, onCancel }) {
           marginBottom: 20,
         }}>
           <button
-            onClick={() => setValue((v) => Math.max(1, v - 1))}
+            onClick={() => updateValue(Math.max(1, value - 1))}
             style={{
               width: 44,
               height: 44,
@@ -96,8 +120,8 @@ function PointModal({ house, onConfirm, onCancel }) {
             value={value}
             onChange={(e) => {
               const num = parseInt(e.target.value, 10)
-              if (!isNaN(num) && num > 0) setValue(num)
-              if (e.target.value === '') setValue(1)
+              if (!isNaN(num) && num > 0) updateValue(num)
+              if (e.target.value === '') updateValue(1)
             }}
             style={{
               width: 60,
@@ -112,7 +136,7 @@ function PointModal({ house, onConfirm, onCancel }) {
             min="1"
           />
           <button
-            onClick={() => setValue((v) => v + 1)}
+            onClick={() => updateValue(value + 1)}
             style={{
               width: 44,
               height: 44,
@@ -168,11 +192,17 @@ function PointModal({ house, onConfirm, onCancel }) {
 
         {/* Confirm button — matches house button style */}
         <button
-          onClick={() => onConfirm({
-            notes: notes.trim() || null,
-            studentName: studentName.trim() || null,
-            value: value,
-          })}
+          onClick={() => {
+            if (value > 5 && !confirmingLarge) {
+              setConfirmingLarge(true)
+              return
+            }
+            onConfirm({
+              notes: notes.trim() || null,
+              studentName: studentName.trim() || null,
+              value: value,
+            })
+          }}
           style={{
             width: '100%',
             padding: '16px',
@@ -189,7 +219,7 @@ function PointModal({ house, onConfirm, onCancel }) {
             boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.3)',
           }}
         >
-          Confirm
+          {confirmingLarge ? `Confirm ${value} points — are you sure?` : 'Confirm'}
         </button>
 
         <button
