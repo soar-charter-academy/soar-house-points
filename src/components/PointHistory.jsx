@@ -3,30 +3,68 @@ import { supabase } from '../supabase'
 import PointRow from './PointRow'
 
 // ============================================
-// PointHistory — staff's own awarded points
+// PointHistory — house points history
 // ============================================
+// Two tabs: My Points (personal history with edit controls)
+// and All Points (full school-wide history, read-only).
 
 function PointHistory({ staffId, houses, onBack }) {
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState(new Set())
   const [selected, setSelected] = useState(new Set())
+  const [tab, setTab] = useState('mine')
+  const [profiles, setProfiles] = useState({})
 
   const houseMap = {}
   houses.forEach((h) => { houseMap[h.id] = h })
 
   useEffect(() => {
-    fetchPoints()
+    async function fetchProfiles() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+      if (data) {
+        const map = {}
+        data.forEach((p) => { map[p.id] = p.display_name })
+        setProfiles(map)
+      }
+    }
+    fetchProfiles()
   }, [])
 
+  useEffect(() => {
+    setLoading(true)
+    setSelected(new Set())
+    fetchPoints()
+
+    // Live updates
+    const channel = supabase
+      .channel('history-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'points' },
+        () => fetchPoints()
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [tab])
+
   async function fetchPoints() {
-    const { data, error } = await supabase
+    let query = supabase
       .from('points')
       .select('*')
-      .eq('staff_id', staffId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
 
+    if (tab === 'mine') {
+      query = query.eq('staff_id', staffId)
+    }
+
+    const { data, error } = await query
     if (error) {
       console.error('Failed to fetch points:', error.message)
     } else {
@@ -88,8 +126,8 @@ function PointHistory({ staffId, houses, onBack }) {
     <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
       <div style={{ maxWidth: 400, margin: '0 auto' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        {/* Header row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <button
             onClick={onBack}
             style={{
@@ -100,23 +138,66 @@ function PointHistory({ staffId, houses, onBack }) {
           >
             ← Back
           </button>
-          <h1 style={{ fontSize: 18, fontWeight: 700 }}>My Points</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 700 }}>House Points</h1>
           {hasSelection ? (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button
-                onClick={deleteSelected}
-                style={{
-                  padding: '6px 12px', fontSize: 12, fontWeight: 700,
-                  background: '#dc3545', color: '#fff',
-                  border: 'none', borderRadius: 8, cursor: 'pointer',
-                }}
-              >
-                Remove ({selected.size})
-              </button>
-            </div>
+            <button
+              onClick={deleteSelected}
+              style={{
+                padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                background: '#dc3545', color: '#fff',
+                border: 'none', borderRadius: 8, cursor: 'pointer',
+              }}
+            >
+              Remove ({selected.size})
+            </button>
           ) : (
             <div style={{ width: 70 }} />
           )}
+        </div>
+
+        {/* Tabs — centered */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 0,
+          marginBottom: 20,
+        }}>
+          <div style={{
+            display: 'flex',
+            borderRadius: 8,
+            overflow: 'hidden',
+            border: '1px solid #ddd',
+          }}>
+            <button
+              onClick={() => setTab('mine')}
+              style={{
+                padding: '8px 20px',
+                fontSize: 13,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: tab === 'mine' ? '#3a3a3a' : '#fff',
+                color: tab === 'mine' ? '#fff' : '#666',
+              }}
+            >
+              My Points
+            </button>
+            <button
+              onClick={() => setTab('all')}
+              style={{
+                padding: '8px 20px',
+                fontSize: 13,
+                fontWeight: 600,
+                border: 'none',
+                borderLeft: '1px solid #ddd',
+                cursor: 'pointer',
+                background: tab === 'all' ? '#3a3a3a' : '#fff',
+                color: tab === 'all' ? '#fff' : '#666',
+              }}
+            >
+              All Points
+            </button>
+          </div>
         </div>
 
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
@@ -136,8 +217,10 @@ function PointHistory({ staffId, houses, onBack }) {
               house={houseMap[point.house_id]}
               isSelected={selected.has(point.id)}
               isRemoving={removing.has(point.id)}
-              onToggle={() => toggleSelect(point.id)}
-              onDelete={() => deletePoint(point.id)}
+              onToggle={tab === 'mine' ? () => toggleSelect(point.id) : undefined}
+              onDelete={point.staff_id === staffId ? () => deletePoint(point.id) : undefined}
+              staffName={tab === 'all' ? (profiles[point.staff_id] || 'Staff') : null}
+              showCheckbox={tab === 'mine'}
             />
           ))}
         </div>
