@@ -35,14 +35,12 @@ function HouseHistory({ house, currentUserId, onBack }) {
   }, [])
 
   async function fetchPoints() {
-    console.log('Fetching points for house:', house.id, house.name)
     const { data, error } = await supabase
       .from('points')
       .select('*')
       .eq('house_id', house.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
-    console.log('Points result:', data?.length, error)
     if (error) {
       console.error('Failed to fetch house points:', error.message)
     } else {
@@ -72,7 +70,6 @@ function HouseHistory({ house, currentUserId, onBack }) {
   }
 
   const totalPoints = points.reduce((sum, p) => sum + p.value, 0)
-  console.log('Render state:', { loading, pointsCount: points.length, removingSize: removing.size })
 
   return (
     <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
