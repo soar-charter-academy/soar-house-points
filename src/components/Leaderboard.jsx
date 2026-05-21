@@ -1,18 +1,29 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
-// ============================================
-// Leaderboard — live house point standings
-// ============================================
-// Shows ranked houses with point totals and
-// percentage bars. Updates in real-time when
-// points are added or removed.
-
 function Leaderboard({ onHouseTap }) {
   const [totals, setTotals] = useState([])
+  const [period, setPeriod] = useState('year')
+
+  function getSince(period) {
+    const now = new Date()
+    if (period === 'today') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      return start.toISOString()
+    }
+    if (period === 'week') {
+      const day = now.getDay()
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day)
+      return start.toISOString()
+    }
+    // 'year' — start of school year (August 1)
+    const year = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1
+    return new Date(year, 7, 1).toISOString()
+  }
 
   async function fetchTotals() {
-    const { data, error } = await supabase.rpc('get_house_totals')
+    const since = getSince(period)
+    const { data, error } = await supabase.rpc('get_house_totals_since', { since })
     if (error) {
       console.error('Failed to fetch totals:', error.message)
     } else {
@@ -23,7 +34,6 @@ function Leaderboard({ onHouseTap }) {
   useEffect(() => {
     fetchTotals()
 
-    // Subscribe to real-time changes on the points table
     const channel = supabase
       .channel('points-changes')
       .on(
@@ -36,9 +46,15 @@ function Leaderboard({ onHouseTap }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [period])
 
   const maxPoints = Math.max(...totals.map((t) => t.total_points), 1)
+
+  const tabs = [
+    { key: 'today', label: 'Today' },
+    { key: 'week', label: 'This Week' },
+    { key: 'year', label: 'This Year' },
+  ]
 
   return (
     <div style={{ marginTop: 24 }}>
@@ -54,6 +70,40 @@ function Leaderboard({ onHouseTap }) {
       }}>
         Leaderboard
       </h2>
+
+      {/* Period tabs */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        marginBottom: 16,
+      }}>
+        <div style={{
+          display: 'flex',
+          borderRadius: 8,
+          overflow: 'hidden',
+          border: '1px solid #ddd',
+        }}>
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setPeriod(t.key)}
+              style={{
+                padding: '6px 14px',
+                fontSize: 12,
+                fontWeight: 600,
+                border: 'none',
+                borderLeft: t.key !== 'today' ? '1px solid #ddd' : 'none',
+                cursor: 'pointer',
+                background: period === t.key ? '#3a3a3a' : '#fff',
+                color: period === t.key ? '#fff' : '#666',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {totals.map((house, index) => (
           <div
@@ -74,7 +124,6 @@ function Leaderboard({ onHouseTap }) {
               cursor: 'pointer',
             }}
           >
-            {/* Rank */}
             <div style={{ width: 40, flexShrink: 0, textAlign: 'center' }}>
               {index < 3 ? (
                 <img
@@ -85,20 +134,12 @@ function Leaderboard({ onHouseTap }) {
               ) : null}
             </div>
 
-            {/* Name and bar */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: 13,
-                fontWeight: 700,
-                marginBottom: 4,
-              }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
                 {house.house_name}
               </div>
               <div style={{
-                height: 6,
-                borderRadius: 3,
-                background: '#eee',
-                overflow: 'hidden',
+                height: 6, borderRadius: 3, background: '#eee', overflow: 'hidden',
               }}>
                 <div style={{
                   height: '100%',
@@ -110,7 +151,6 @@ function Leaderboard({ onHouseTap }) {
               </div>
             </div>
 
-            {/* Points total */}
             <span style={{
               fontFamily: "'Russo One', sans-serif",
               fontSize: 18,
