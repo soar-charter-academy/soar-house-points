@@ -3,7 +3,7 @@ import { supabase } from '../supabase'
 
 function Leaderboard({ onHouseTap }) {
   const [totals, setTotals] = useState([])
-  const [period, setPeriod] = useState('year')
+  const [period, setPeriod] = useState('today')
 
   function getSince(period) {
     const now = new Date()

@@ -138,7 +138,7 @@ function PointHistory({ staffId, houses, onBack }) {
           >
             ← Back
           </button>
-          <h1 style={{ fontSize: 18, fontWeight: 700 }}>House Points</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 700 }}>Points History</h1>
           {hasSelection ? (
             <button
               onClick={deleteSelected}

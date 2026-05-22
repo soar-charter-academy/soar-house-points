@@ -255,7 +255,7 @@ function App() {
                       cursor: 'pointer', textAlign: 'left', color: '#333',
                     }}
                   >
-                    House Points
+                    Points History
                   </button>
                   <button
                     onClick={() => { setShowProfileMenu(false); signOut(); }}
