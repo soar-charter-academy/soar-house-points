@@ -5,7 +5,7 @@ import { supabase } from '../supabase'
 // HouseHistory — point history for a single house
 // ============================================
 
-function HouseHistory({ house, currentUserId, onBack }) {
+function HouseHistory({ house, currentUserId, onBack, isMyHouse, onChangeHouse }) {
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [profiles, setProfiles] = useState({})
@@ -161,6 +161,19 @@ function HouseHistory({ house, currentUserId, onBack }) {
             </div>
           ))}
         </div>
+
+        {isMyHouse && onChangeHouse && (
+          <button
+            onClick={onChangeHouse}
+            style={{
+              display: 'block', margin: '24px auto 0', padding: '10px 20px',
+              fontSize: 13, background: 'none', border: '1px solid #ccc',
+              borderRadius: 8, cursor: 'pointer', color: '#666',
+            }}
+          >
+            Change House
+          </button>
+        )}
       </div>
     </div>
   )

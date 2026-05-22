@@ -149,6 +149,60 @@ function App() {
     )
   }
 
+  // ---- Render: house selection (first login) ----
+  if (session && profile && !profile.house_id) {
+    return (
+      <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
+        <div style={{ maxWidth: 400, margin: '0 auto', textAlign: 'center' }}>
+          <img src="/images/logo.png" alt="SOAR" style={{ width: 80, marginBottom: 16 }} />
+          <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Welcome to SOAR House Points!</h1>
+          <p style={{ fontSize: 14, color: '#666', marginBottom: 24 }}>
+            Which house are you in?
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {houses.map((house) => (
+              <button
+                key={house.id}
+                onClick={async () => {
+                  await supabase.from('profiles').update({ house_id: house.id }).eq('id', session.user.id)
+                  setProfile({ ...profile, house_id: house.id })
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 16px', background: '#fff',
+                  border: '2px solid #eee', borderRadius: 12,
+                  cursor: 'pointer', fontSize: 16, fontWeight: 600,
+                  textAlign: 'left',
+                }}
+              >
+                <img
+                  src={`/images/${house.name.toLowerCase()}.png`}
+                  alt={house.name}
+                  style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }}
+                />
+                {house.name}
+              </button>
+            ))}
+            <button
+              onClick={async () => {
+                // Set a placeholder so they aren't asked again immediately
+                setProfile({ ...profile, house_id: 'skip' })
+              }}
+              style={{
+                padding: '12px', fontSize: 14,
+                background: 'none', border: 'none',
+                cursor: 'pointer', color: '#999',
+                marginTop: 8,
+              }}
+            >
+              I don't know yet — I'll set it later
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // ---- Render: login screen ----
   if (!session) {
     return (
@@ -181,6 +235,11 @@ function App() {
         house={selectedHouseView}
         currentUserId={session.user.id}
         onBack={() => setSelectedHouseView(null)}
+        isMyHouse={selectedHouseView?.id === profile.house_id}
+        onChangeHouse={() => {
+          setSelectedHouseView(null)
+          setProfile({ ...profile, house_id: null })
+        }}
       />
     )
   }
@@ -213,15 +272,15 @@ function App() {
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                background: '#3a3a3a',
+                background: houses.find((h) => h.id === profile.house_id)?.color_hex || '#3a3a3a',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                color: '#fff',
+                color: houses.find((h) => h.id === profile.house_id)?.color_hex === '#ffb70c' ? '#1a1200' : '#fff',
                 fontSize: 18,
                 fontWeight: 700,
-                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)',
+                
               }}
             >
               {profile.display_name ? profile.display_name.charAt(0).toUpperCase() : '?'}
@@ -249,20 +308,37 @@ function App() {
                   <button
                     onClick={() => { setShowProfileMenu(false); setView('history'); }}
                     style={{
-                      display: 'block', width: '100%', padding: '12px 16px',
+                      display: 'block', width: '100%', padding: '8px 16px',
                       fontSize: 14, fontWeight: 600, background: 'none',
-                      border: 'none', borderBottom: '1px solid #eee',
+                      border: 'none',
                       cursor: 'pointer', textAlign: 'left', color: '#333',
                     }}
                   >
                     Points History
                   </button>
+                  {profile.house_id && (
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false)
+                        const myHouse = houses.find((h) => h.id === profile.house_id)
+                        if (myHouse) setSelectedHouseView(myHouse)
+                      }}
+                      style={{
+                        display: 'block', width: '100%', padding: '8px 16px',
+                        fontSize: 14, fontWeight: 600, background: 'none',
+                        border: 'none',
+                        cursor: 'pointer', textAlign: 'left', color: '#333',
+                      }}
+                    >
+                      My House
+                    </button>
+                  )}
                   <button
                     onClick={() => { setShowProfileMenu(false); signOut(); }}
                     style={{
                       display: 'block', width: '100%', padding: '12px 16px',
                       fontSize: 14, fontWeight: 600, background: 'none',
-                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      border: 'none', cursor: 'pointer', textAlign: 'left', borderTop: '1px solid #eee', 
                       color: '#d33',
                     }}
                   >
