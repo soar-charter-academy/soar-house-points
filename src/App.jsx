@@ -15,77 +15,72 @@ import StudentDirectory from './components/StudentDirectory'
 //   2. Logged in but no profile → unauthorized (student account)
 //   3. Logged in with profile → house points board
 
-function PointModal({ house, onConfirm, onCancel, prefilledStudent = null }) {
-  const [notes, setNotes] = useState('')
-  const [selectedStudent, setSelectedStudent] = useState(prefilledStudent)
-  const [studentQuery, setStudentQuery] = useState('')
-  const [students, setStudents] = useState([])
-  const [showResults, setShowResults] = useState(false)
-  const [value, setValue] = useState(1)
-  const [confirmingLarge, setConfirmingLarge] = useState(false)
-  const searchRef = useRef(null)
-  const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'
+  function App() {
+    const [session, setSession] = useState(null)
+    const [profile, setProfile] = useState(null)
+    const [houses, setHouses] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [view, setView] = useState('board')
+    const [selectedHouse, setSelectedHouse] = useState(null)
+    const [confirmedPops, setConfirmedPops] = useState({})
+    const [showProfileMenu, setShowProfileMenu] = useState(false)
+    const [selectedHouseView, setSelectedHouseView] = useState(null)
+    const [prefilledStudent, setPrefilledStudent] = useState(null)
 
+    useEffect(() => {
+      const link = document.createElement('link')
+      link.href = 'https://fonts.googleapis.com/css2?family=Russo+One&display=swap'
+      link.rel = 'stylesheet'
+      document.head.appendChild(link)
+    }, [])
 
-  useEffect(() => {
-    const link = document.createElement('link')
-    link.href = 'https://fonts.googleapis.com/css2?family=Russo+One&display=swap'
-    link.rel = 'stylesheet'
-    document.head.appendChild(link)
-  }, [])
-
-  // ---- Auth: check session on mount and listen for changes ----
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      if (session) fetchProfile(session.user.id)
-      else setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+    useEffect(() => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session)
         if (session) fetchProfile(session.user.id)
-        else {
-          setProfile(null)
-          setLoading(false)
-        }
-      }
-    )
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  // ---- Fetch the staff profile from the profiles table ----
-  // If no profile exists (student accounts), profile stays null
-  // and the user sees the "staff only" screen.
-  async function fetchProfile(userId) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-
-    if (error) {
-      console.log('No profile found:', error.message)
-      setProfile(null)
-    } else {
-      setProfile(data)
-    }
-    setLoading(false)
-  }
-
-  // ---- Fetch houses once the user is authenticated ----
-  useEffect(() => {
-    if (!profile) return
-    supabase
-      .from('houses')
-      .select('*')
-      .order('name')
-      .then(({ data }) => {
-        if (data) setHouses(data)
+        else setLoading(false)
       })
-  }, [profile])
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          setSession(session)
+          if (session) fetchProfile(session.user.id)
+          else {
+            setProfile(null)
+            setLoading(false)
+          }
+        }
+      )
+
+      return () => subscription.unsubscribe()
+    }, [])
+
+    async function fetchProfile(userId) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        console.log('No profile found:', error.message)
+        setProfile(null)
+      } else {
+        setProfile(data)
+      }
+      setLoading(false)
+    }
+
+    useEffect(() => {
+      if (!profile) return
+      supabase
+        .from('houses')
+        .select('*')
+        .order('name')
+        .then(({ data }) => {
+          if (data) setHouses(data)
+        })
+    }, [profile])
 
   // Open the confirmation modal for a house
   function handleHouseTap(houseId) {

@@ -8,14 +8,13 @@ import { supabase } from '../supabase'
 function PointModal({ house, onConfirm, onCancel, prefilledStudent = null }) {
   const [notes, setNotes] = useState('')
   const [studentQuery, setStudentQuery] = useState('')
-  const [selectedStudent, setSelectedStudent] = useState(null)
+  const [selectedStudent, setSelectedStudent] = useState(prefilledStudent)
   const [students, setStudents] = useState([])
   const [showResults, setShowResults] = useState(false)
   const [value, setValue] = useState(1)
   const [confirmingLarge, setConfirmingLarge] = useState(false)
   const searchRef = useRef(null)
-  const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'const [selectedStudent, setSelectedStudent] = useState(prefilledStudent)
-  const [studentQuery, setStudentQuery] = useState('')
+  const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'
   
 
   // Fetch all active students on mount
