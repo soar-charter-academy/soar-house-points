@@ -92,7 +92,7 @@ function App() {
   }
 
   // Write the point to Supabase after confirmation
-  async function confirmPoint({ notes, studentName, value }) {
+  async function confirmPoint({ notes, studentName, studentId, value }) {
     if (!selectedHouse) return
 
     const { error } = await supabase
@@ -101,6 +101,7 @@ function App() {
         house_id: selectedHouse.id,
         staff_id: session.user.id,
         notes: notes,
+        student_id: studentId,
         value: value,
       })
 

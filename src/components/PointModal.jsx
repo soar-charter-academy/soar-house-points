@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { supabase } from '../supabase'
 
 // ============================================
 // PointModal — optional details before confirming
@@ -6,33 +7,66 @@ import { useState, useEffect } from 'react'
 
 function PointModal({ house, onConfirm, onCancel }) {
   const [notes, setNotes] = useState('')
-  const [studentName, setStudentName] = useState('')
+  const [studentQuery, setStudentQuery] = useState('')
+  const [selectedStudent, setSelectedStudent] = useState(null)
+  const [students, setStudents] = useState([])
+  const [showResults, setShowResults] = useState(false)
   const [value, setValue] = useState(1)
   const [confirmingLarge, setConfirmingLarge] = useState(false)
+  const searchRef = useRef(null)
   const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'
-  
+
+  // Fetch all active students on mount
+  useEffect(() => {
+    async function fetchStudents() {
+      const { data } = await supabase
+        .from('students')
+        .select('id, first_name, last_name, grade, house_id')
+        .eq('active', true)
+        .order('last_name')
+      if (data) setStudents(data)
+    }
+    fetchStudents()
+  }, [])
+
+  // Enter key handler
   useEffect(() => {
     function handleKeyDown(e) {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !showResults) {
         if (value > 5 && !confirmingLarge) {
           setConfirmingLarge(true)
         } else {
-          onConfirm({
-            notes: notes.trim() || null,
-            studentName: studentName.trim() || null,
-            value: value,
-          })
+          handleConfirm()
         }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [value, notes, studentName, confirmingLarge, onConfirm])
+  }, [value, notes, selectedStudent, studentQuery, confirmingLarge, showResults])
 
   function updateValue(newVal) {
     setValue(newVal)
     setConfirmingLarge(false)
   }
+
+  function handleConfirm() {
+    onConfirm({
+      notes: notes.trim() || null,
+      studentName: selectedStudent
+        ? `${selectedStudent.first_name} ${selectedStudent.last_name}`
+        : studentQuery.trim() || null,
+      studentId: selectedStudent?.id || null,
+      value: value,
+    })
+  }
+
+  // Filter students based on query
+  const filtered = studentQuery.length >= 2
+    ? students.filter((s) => {
+        const full = `${s.first_name} ${s.last_name}`.toLowerCase()
+        return full.includes(studentQuery.toLowerCase())
+      }).slice(0, 8)
+    : []
 
   return (
     <div
@@ -113,7 +147,7 @@ function PointModal({ house, onConfirm, onCancel }) {
               justifyContent: 'center',
             }}
           >
-            - 
+            -
           </button>
           <input
             type="number"
@@ -156,23 +190,104 @@ function PointModal({ house, onConfirm, onCancel }) {
           </button>
         </div>
 
-        {/* Optional fields */}
-        <input
-          type="text"
-          placeholder="Student name (optional)"
-          value={studentName}
-          onChange={(e) => setStudentName(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '10px 12px',
-            fontSize: 14,
-            border: '1px solid #ddd',
-            borderRadius: 8,
-            marginBottom: 12,
-            boxSizing: 'border-box',
-            outline: 'none',
-          }}
-        />
+        {/* Student search */}
+        <div style={{ position: 'relative', marginBottom: 12 }} ref={searchRef}>
+          {selectedStudent ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 12px',
+              border: '1px solid #ddd',
+              borderRadius: 8,
+              background: '#f8f8f8',
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>
+                {selectedStudent.first_name} {selectedStudent.last_name}
+                <span style={{ fontWeight: 400, color: '#888', marginLeft: 8 }}>
+                  Gr {selectedStudent.grade}
+                </span>
+              </span>
+              <button
+                onClick={() => { setSelectedStudent(null); setStudentQuery('') }}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: '#999', fontSize: 16, padding: '0 4px',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              placeholder="Search student (optional)"
+              value={studentQuery}
+              onChange={(e) => {
+                setStudentQuery(e.target.value)
+                setShowResults(true)
+              }}
+              onFocus={() => setShowResults(true)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                fontSize: 14,
+                border: '1px solid #ddd',
+                borderRadius: 8,
+                boxSizing: 'border-box',
+                outline: 'none',
+              }}
+            />
+          )}
+
+          {/* Search results dropdown */}
+          {showResults && filtered.length > 0 && !selectedStudent && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              background: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: 8,
+              marginTop: 4,
+              maxHeight: 200,
+              overflowY: 'auto',
+              zIndex: 10,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            }}>
+              {filtered.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => {
+                    setSelectedStudent(s)
+                    setStudentQuery('')
+                    setShowResults(false)
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 12px',
+                    fontSize: 14,
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: '1px solid #f0f0f0',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span style={{ fontWeight: 600 }}>
+                    {s.first_name} {s.last_name}
+                  </span>
+                  <span style={{ color: '#888', marginLeft: 8 }}>
+                    Gr {s.grade}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <input
           type="text"
           placeholder="Notes (optional)"
@@ -190,18 +305,14 @@ function PointModal({ house, onConfirm, onCancel }) {
           }}
         />
 
-        {/* Confirm button — matches house button style */}
+        {/* Confirm button */}
         <button
           onClick={() => {
             if (value > 5 && !confirmingLarge) {
               setConfirmingLarge(true)
               return
             }
-            onConfirm({
-              notes: notes.trim() || null,
-              studentName: studentName.trim() || null,
-              value: value,
-            })
+            handleConfirm()
           }}
           style={{
             width: '100%',
