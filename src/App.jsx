@@ -5,6 +5,7 @@ import PointModal from './components/PointModal'
 import PointHistory from './components/PointHistory'
 import Leaderboard from './components/Leaderboard'
 import HouseHistory from './components/HouseHistory'
+import StudentDirectory from './components/StudentDirectory'
 
 // ============================================
 // App — main application component
@@ -14,16 +15,17 @@ import HouseHistory from './components/HouseHistory'
 //   2. Logged in but no profile → unauthorized (student account)
 //   3. Logged in with profile → house points board
 
-function App() {
-  const [session, setSession] = useState(null)   // Supabase auth session
-  const [profile, setProfile] = useState(null)   // Staff profile from profiles table
-  const [houses, setHouses] = useState([])        // House data from houses table
-  const [loading, setLoading] = useState(true)    // Initial auth check
-  const [view, setView] = useState('board')    // 'board' or 'history'
-  const [selectedHouse, setSelectedHouse] = useState(null) // house object for modal
-  const [confirmedPops, setConfirmedPops] = useState({})
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
-  const [selectedHouseView, setSelectedHouseView] = useState(null)
+function PointModal({ house, onConfirm, onCancel, prefilledStudent = null }) {
+  const [notes, setNotes] = useState('')
+  const [selectedStudent, setSelectedStudent] = useState(prefilledStudent)
+  const [studentQuery, setStudentQuery] = useState('')
+  const [students, setStudents] = useState([])
+  const [showResults, setShowResults] = useState(false)
+  const [value, setValue] = useState(1)
+  const [confirmingLarge, setConfirmingLarge] = useState(false)
+  const searchRef = useRef(null)
+  const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'
+
 
   useEffect(() => {
     const link = document.createElement('link')
@@ -245,6 +247,24 @@ function App() {
     )
   }
 
+  // ---- Render: student directory ----
+  if (view === 'students') {
+    return (
+      <StudentDirectory
+        houses={houses}
+        onSelectStudent={(student, house) => {
+          if (house) {
+            setView('board')
+            setSelectedHouse(house)
+            // Store selected student for the modal
+            setPrefilledStudent(student)
+          }
+        }}
+        onBack={() => setView('board')}
+      />
+    )
+  }
+
   // ---- Render: view routing ----
   if (view === 'history') {
     return (
@@ -316,6 +336,17 @@ function App() {
                   >
                     Points History
                   </button>
+                  <button
+                    onClick={() => { setShowProfileMenu(false); setView('students') }}
+                    style={{
+                      display: 'block', width: '100%', padding: '12px 16px',
+                      fontSize: 14, fontWeight: 600, background: 'none',
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      color: '#333',
+                    }}
+                  >
+                    Students
+                  </button>
                   {profile.house_id && (
                     <button
                       onClick={() => {
@@ -380,8 +411,15 @@ function App() {
         {selectedHouse && (
           <PointModal
             house={selectedHouse}
-            onConfirm={confirmPoint}
-            onCancel={() => setSelectedHouse(null)}
+            prefilledStudent={prefilledStudent}
+            onConfirm={(data) => {
+              confirmPoint(data)
+              setPrefilledStudent(null)
+            }}
+            onCancel={() => {
+              setSelectedHouse(null)
+              setPrefilledStudent(null)
+            }}
           />
         )}
       </div>

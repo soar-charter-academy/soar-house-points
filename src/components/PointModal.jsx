@@ -5,7 +5,7 @@ import { supabase } from '../supabase'
 // PointModal — optional details before confirming
 // ============================================
 
-function PointModal({ house, onConfirm, onCancel }) {
+function PointModal({ house, onConfirm, onCancel, prefilledStudent = null }) {
   const [notes, setNotes] = useState('')
   const [studentQuery, setStudentQuery] = useState('')
   const [selectedStudent, setSelectedStudent] = useState(null)
@@ -14,7 +14,9 @@ function PointModal({ house, onConfirm, onCancel }) {
   const [value, setValue] = useState(1)
   const [confirmingLarge, setConfirmingLarge] = useState(false)
   const searchRef = useRef(null)
-  const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'
+  const textColor = house.color_hex === '#ffb70c' ? '#1a1200' : '#fff'const [selectedStudent, setSelectedStudent] = useState(prefilledStudent)
+  const [studentQuery, setStudentQuery] = useState('')
+  
 
   // Fetch all active students on mount
   useEffect(() => {
