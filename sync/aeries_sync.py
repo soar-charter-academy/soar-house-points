@@ -186,11 +186,24 @@ def sync_sections():
                 teacher_name = 'Unknown'
 
             name = f"{teacher_name} — Period {period}" if period else teacher_name
+            
+            # Try to match primary teacher to a profile
+            teacher_profile_id = None
+            if primary:
+                teacher_key = f"{primary['FirstName']} {primary['LastName']}".lower().strip()
+                # Look up from profiles
+                prof_result = sb.table('profiles') \
+                    .select('id') \
+                    .eq('aeries_staff_id', primary['StaffID']) \
+                    .execute()
+                if prof_result.data:
+                    teacher_profile_id = prof_result.data[0]['id']
 
             record = {
                 'aeries_id': aeries_id,
                 'name': name,
                 'period': period,
+                'staff_id': teacher_profile_id,
                 'school_year': '2025-2026',
             }
 
@@ -239,6 +252,61 @@ def sync_sections():
     print(f"Sections updated: {sections_updated}")
     print(f"Enrollments created: {enrollments_created}")
 
+def sync_staff_ids():
+    """Match Aeries StaffIDs to app profiles using teacher names from sections."""
+    print("\n--- Matching Staff IDs ---\n")
+
+    profiles = sb.table('profiles').select('id, display_name, aeries_staff_id').execute()
+    profile_map = {}
+    for p in profiles.data:
+        if p['display_name']:
+            name_key = p['display_name'].lower().strip()
+            profile_map[name_key] = p
+
+    matched = 0
+    already_set = 0
+
+    seen_staff = {}  # aeries StaffID → {first, last}
+
+    for school_code in SCHOOL_CODES:
+        r = requests.get(
+            f'{AERIES_BASE}/schools/{school_code}/sections',
+            headers={'AERIES-CERT': AERIES_CERT, 'Accept': 'application/json'}
+        )
+        if r.status_code != 200:
+            continue
+
+        for sec in r.json():
+            for staff in sec.get('SectionStaffMembers', []):
+                staff_id = staff.get('StaffID')
+                first = staff.get('FirstName', '').strip()
+                last = staff.get('LastName', '').strip()
+                if staff_id and first and last:
+                    seen_staff[staff_id] = {'first': first, 'last': last}
+
+    print(f"Found {len(seen_staff)} unique staff in Aeries sections\n")
+
+    for staff_id, names in seen_staff.items():
+        full_name = f"{names['first']} {names['last']}".lower()
+
+        if full_name in profile_map:
+            profile = profile_map[full_name]
+            if profile.get('aeries_staff_id') == staff_id:
+                already_set += 1
+                continue
+
+            sb.table('profiles') \
+                .update({'aeries_staff_id': staff_id}) \
+                .eq('id', profile['id']) \
+                .execute()
+            print(f"  {names['first']} {names['last']} → StaffID {staff_id}")
+            matched += 1
+        else:
+            print(f"  {names['first']} {names['last']} — no profile match")
+
+    print(f"\nMatched: {matched}, Already set: {already_set}")    
+
 if __name__ == '__main__':
     sync_students()
+    sync_staff_ids()
     sync_sections()

@@ -6,6 +6,7 @@ import PointHistory from './components/PointHistory'
 import Leaderboard from './components/Leaderboard'
 import HouseHistory from './components/HouseHistory'
 import StudentDirectory from './components/StudentDirectory'
+import MyStudents from './components/MyStudents'
 
 // ============================================
 // App — main application component
@@ -260,6 +261,24 @@ import StudentDirectory from './components/StudentDirectory'
     )
   }
 
+  // ---- Render: my students ----
+  if (view === 'mystudents') {
+    return (
+      <MyStudents
+        staffId={session.user.id}
+        houses={houses}
+        onSelectStudent={(student, house) => {
+          if (house) {
+            setView('board')
+            setSelectedHouse(house)
+            setPrefilledStudent(student)
+          }
+        }}
+        onBack={() => setView('board')}
+      />
+    )
+  }
+
   // ---- Render: view routing ----
   if (view === 'history') {
     return (
@@ -334,13 +353,24 @@ import StudentDirectory from './components/StudentDirectory'
                   <button
                     onClick={() => { setShowProfileMenu(false); setView('students') }}
                     style={{
-                      display: 'block', width: '100%', padding: '12px 16px',
+                      display: 'block', width: '100%', padding: '8px 16px',
                       fontSize: 14, fontWeight: 600, background: 'none',
                       border: 'none', cursor: 'pointer', textAlign: 'left',
                       color: '#333',
                     }}
                   >
-                    Students
+                    All Students
+                  </button>
+                  <button
+                    onClick={() => { setShowProfileMenu(false); setView('mystudents') }}
+                    style={{
+                      display: 'block', width: '100%', padding: '8px 16px',
+                      fontSize: 14, fontWeight: 600, background: 'none',
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      color: '#333',
+                    }}
+                  >
+                    My Classes
                   </button>
                   {profile.house_id && (
                     <button

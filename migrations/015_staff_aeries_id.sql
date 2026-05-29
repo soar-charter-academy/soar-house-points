@@ -1,0 +1,1 @@
+alter table profiles add column aeries_staff_id integer;
