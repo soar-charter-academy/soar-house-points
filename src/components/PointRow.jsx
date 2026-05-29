@@ -2,7 +2,7 @@
 // PointRow — single point entry in history
 // ============================================
 
-function PointRow({ point, house, isSelected, isRemoving, onToggle, onDelete, staffName, showControls = true }) {
+function PointRow({ point, house, isSelected, isRemoving, onToggle, onDelete, staffName, showCheckbox = true }) {
 
   if (!point) return null
 
@@ -16,7 +16,7 @@ function PointRow({ point, house, isSelected, isRemoving, onToggle, onDelete, st
 
   return (
     <div
-      onClick={showControls && onToggle ? onToggle : undefined}
+      onClick={showCheckbox && onToggle ? onToggle : undefined}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -32,12 +32,12 @@ function PointRow({ point, house, isSelected, isRemoving, onToggle, onDelete, st
         marginBottom: isRemoving ? '-8px' : '0px',
         overflow: 'hidden',
         transition: 'opacity 0.3s ease, transform 0.3s ease, max-height 0.4s ease 0.1s, padding 0.4s ease 0.1s, margin-bottom 0.4s ease 0.1s, background 0.15s ease, border 0.15s ease',
-        cursor: showControls ? 'pointer' : 'default',
+        cursor: showCheckbox ? 'pointer' : 'default',
         animation: isRemoving ? 'none' : 'slideIn 0.3s ease',
       }}
     >
       {/* Checkbox (My Points only) */}
-      {showControls && (
+      {showCheckbox && (
         <div style={{
           width: 22, height: 22, borderRadius: '50%',
           border: isSelected ? '2px solid #4285f4' : '2px solid #ccc',
@@ -71,7 +71,7 @@ function PointRow({ point, house, isSelected, isRemoving, onToggle, onDelete, st
       </div>
 
       {/* Remove button (My Points only) */}
-      {showControls && onDelete && (
+      {showCheckbox && onDelete && (
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           style={{

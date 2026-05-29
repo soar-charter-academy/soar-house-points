@@ -280,7 +280,6 @@ function App() {
                 color: houses.find((h) => h.id === profile.house_id)?.color_hex === '#ffb70c' ? '#1a1200' : '#fff',
                 fontSize: 18,
                 fontWeight: 700,
-                
               }}
             >
               {profile.display_name ? profile.display_name.charAt(0).toUpperCase() : '?'}
