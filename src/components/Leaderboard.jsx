@@ -16,6 +16,10 @@ function Leaderboard({ onHouseTap }) {
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day)
       return start.toISOString()
     }
+    if (period === 'month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1)
+      return start.toISOString()
+    }
     // 'year' — start of school year (August 1)
     const year = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1
     return new Date(year, 7, 1).toISOString()
@@ -53,6 +57,7 @@ function Leaderboard({ onHouseTap }) {
   const tabs = [
     { key: 'today', label: 'Today' },
     { key: 'week', label: 'This Week' },
+    { key: 'month', label: 'This Month' },
     { key: 'year', label: 'This Year' },
   ]
 
