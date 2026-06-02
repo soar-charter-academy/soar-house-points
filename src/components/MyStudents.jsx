@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import ProfileIcon from './ProfileIcon'
 
 // ============================================
 // MyStudents — teacher's own class rosters
 // ============================================
 
-function MyStudents({ staffId, houses, onSelectStudent, onBack }) {
+function MyStudents({ staffId, houses, onSelectStudent, onBack, profile, onNavigate, onSignOut }) {
   const [sections, setSections] = useState([])
   const [selectedSection, setSelectedSection] = useState(null)
   const [students, setStudents] = useState([])
@@ -83,7 +84,7 @@ function MyStudents({ staffId, houses, onSelectStudent, onBack }) {
             ← Back
           </button>
           <h1 style={{ fontSize: 18, fontWeight: 700 }}>My Students</h1>
-          <div style={{ width: 70 }} />
+          <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
         </div>
 
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}

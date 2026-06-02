@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import PointRow from './PointRow'
+import ProfileIcon from './ProfileIcon'
 
 // ============================================
 // PointHistory — house points history
@@ -8,7 +9,7 @@ import PointRow from './PointRow'
 // Two tabs: My Points (personal history with edit controls)
 // and All Points (full school-wide history, read-only).
 
-function PointHistory({ staffId, houses, onBack }) {
+function PointHistory({ staffId, houses, onBack, profile, onNavigate, onSignOut }) {
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState(new Set())
@@ -151,7 +152,7 @@ function PointHistory({ staffId, houses, onBack }) {
               Remove ({selected.size})
             </button>
           ) : (
-            <div style={{ width: 70 }} />
+            <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
           )}
         </div>
 

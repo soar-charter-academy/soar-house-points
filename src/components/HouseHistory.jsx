@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import ProfileIcon from './ProfileIcon'
 
 // ============================================
 // HouseHistory — point history for a single house
 // ============================================
 
-function HouseHistory({ house, currentUserId, onBack, isMyHouse, onChangeHouse }) {
+function HouseHistory({ house, currentUserId, currentUserHouseId, onBack, onChangeHouse, profile, houses, onNavigate, onSignOut }) {
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [profiles, setProfiles] = useState({})

@@ -7,6 +7,7 @@ import Leaderboard from './components/Leaderboard'
 import HouseHistory from './components/HouseHistory'
 import StudentDirectory from './components/StudentDirectory'
 import MyStudents from './components/MyStudents'
+import ProfileIcon from './components/ProfileIcon'
 
 // ============================================
 // App — main application component
@@ -136,6 +137,19 @@ import MyStudents from './components/MyStudents'
     )
   }
 
+  function handleProfileNavigate(view) {
+    setShowProfileMenu(false)
+    setSelectedHouseView(null)
+    if (view === 'myhouse') {
+      const myHouse = houses.find((h) => h.id === profile.house_id)
+      if (myHouse) setSelectedHouseView(myHouse)
+      setView('board')
+    } 
+    else {
+      setView(view)
+    }
+  }
+
   // ---- Render: unauthorized (student or non-staff account) ----
   if (session && !profile) {
     return (
@@ -235,6 +249,9 @@ import MyStudents from './components/MyStudents'
         currentUserId={session.user.id}
         onBack={() => setSelectedHouseView(null)}
         isMyHouse={selectedHouseView?.id === profile.house_id}
+        profile={profile}
+        onNavigate={handleProfileNavigate}
+        onSignOut={signOut}
         onChangeHouse={() => {
           setSelectedHouseView(null)
           setProfile({ ...profile, house_id: null })
@@ -257,6 +274,9 @@ import MyStudents from './components/MyStudents'
           }
         }}
         onBack={() => setView('board')}
+        profile={profile}
+        onNavigate={handleProfileNavigate}
+        onSignOut={signOut}
       />
     )
   }
@@ -275,6 +295,9 @@ import MyStudents from './components/MyStudents'
           }
         }}
         onBack={() => setView('board')}
+        profile={profile}
+        onNavigate={handleProfileNavigate}
+        onSignOut={signOut}
       />
     )
   }
@@ -286,6 +309,9 @@ import MyStudents from './components/MyStudents'
         staffId={session.user.id}
         houses={houses}
         onBack={() => setView('board')}
+        profile={profile}
+        onNavigate={handleProfileNavigate}
+        onSignOut={signOut}
       />
     )
   }
@@ -300,111 +326,13 @@ import MyStudents from './components/MyStudents'
         {/* Header with logo and profile */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <img src="/images/logo.png" alt="SOAR" style={{ height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
-          <div style={{ position: 'relative' }}>
-            <div
-              onClick={() => setShowProfileMenu((prev) => !prev)}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: houses.find((h) => h.id === profile.house_id)?.color_hex || '#3a3a3a',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: houses.find((h) => h.id === profile.house_id)?.color_hex === '#ffb70c' ? '#1a1200' : '#fff',
-                fontSize: 18,
-                fontWeight: 700,
-              }}
-            >
-              {profile.display_name ? profile.display_name.charAt(0).toUpperCase() : '?'}
-            </div>
-
-            {/* Dropdown menu */}
-            {showProfileMenu && (
-              <>
-                {/* Invisible backdrop to close menu */}
-                <div
-                  onClick={() => setShowProfileMenu(false)}
-                  style={{ position: 'fixed', inset: 0, zIndex: 50 }}
-                />
-                <div style={{
-                  position: 'absolute',
-                  top: 48,
-                  right: 0,
-                  background: '#fff',
-                  borderRadius: 10,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                  overflow: 'hidden',
-                  zIndex: 51,
-                  minWidth: 160,
-                }}>
-                  <button
-                    onClick={() => { setShowProfileMenu(false); setView('history'); }}
-                    style={{
-                      display: 'block', width: '100%', padding: '8px 16px',
-                      fontSize: 14, fontWeight: 600, background: 'none',
-                      border: 'none',
-                      cursor: 'pointer', textAlign: 'left', color: '#333',
-                    }}
-                  >
-                    Points History
-                  </button>
-                  <button
-                    onClick={() => { setShowProfileMenu(false); setView('students') }}
-                    style={{
-                      display: 'block', width: '100%', padding: '8px 16px',
-                      fontSize: 14, fontWeight: 600, background: 'none',
-                      border: 'none', cursor: 'pointer', textAlign: 'left',
-                      color: '#333',
-                    }}
-                  >
-                    All Students
-                  </button>
-                  <button
-                    onClick={() => { setShowProfileMenu(false); setView('mystudents') }}
-                    style={{
-                      display: 'block', width: '100%', padding: '8px 16px',
-                      fontSize: 14, fontWeight: 600, background: 'none',
-                      border: 'none', cursor: 'pointer', textAlign: 'left',
-                      color: '#333',
-                    }}
-                  >
-                    My Classes
-                  </button>
-                  {profile.house_id && (
-                    <button
-                      onClick={() => {
-                        setShowProfileMenu(false)
-                        const myHouse = houses.find((h) => h.id === profile.house_id)
-                        if (myHouse) setSelectedHouseView(myHouse)
-                      }}
-                      style={{
-                        display: 'block', width: '100%', padding: '8px 16px',
-                        fontSize: 14, fontWeight: 600, background: 'none',
-                        border: 'none',
-                        cursor: 'pointer', textAlign: 'left', color: '#333',
-                      }}
-                    >
-                      My House
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { setShowProfileMenu(false); signOut(); }}
-                    style={{
-                      display: 'block', width: '100%', padding: '12px 16px',
-                      fontSize: 14, fontWeight: 600, background: 'none',
-                      border: 'none', cursor: 'pointer', textAlign: 'left', borderTop: '1px solid #eee', 
-                      color: '#d33',
-                    }}
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+          <ProfileIcon
+            profile={profile}
+            houses={houses}
+            onNavigate={handleProfileNavigate}
+            onSignOut={signOut}
+          />
+        </div>      
 
         {/* House buttons — first four in a 2×2 grid */}
         <div
@@ -447,7 +375,7 @@ import MyStudents from './components/MyStudents'
             }}
           />
         )}
-      </div>
+      </div>    
     </div>
   )
 }

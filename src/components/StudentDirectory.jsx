@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import ProfileIcon from './ProfileIcon'
 
 // ============================================
 // StudentDirectory — searchable student list
 // ============================================
 
-function StudentDirectory({ houses, onSelectStudent, onBack }) {
+function StudentDirectory({ houses, onSelectStudent, onBack, profile, onNavigate, onSignOut }) {
   const [students, setStudents] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -89,7 +90,7 @@ function StudentDirectory({ houses, onSelectStudent, onBack }) {
             ← Back
           </button>
           <h1 style={{ fontSize: 18, fontWeight: 700 }}>Students</h1>
-          <div style={{ width: 70 }} />
+          <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
         </div>
 
         {/* Search */}
