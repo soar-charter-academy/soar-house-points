@@ -155,15 +155,6 @@ export default function DisplayBoard() {
               }}
             />
 
-            {/* House name */}
-            <div style={{
-              fontSize: '3.2vh',
-              color: house.color_hex,
-              letterSpacing: '0.1em',
-            }}>
-              {house.house_name.toUpperCase()}
-            </div>
-
             {/* Points */}
             <div style={{
               fontSize: '9vh',
