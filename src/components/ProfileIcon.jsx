@@ -50,8 +50,8 @@ function ProfileIcon({ profile, houses, onNavigate, onSignOut }) {
           }}>
             {[
               { label: 'Home', view: 'board' },
-              { label: 'Points History', view: 'history' },
-              { label: 'All Students', view: 'students' },
+              { label: 'History', view: 'history' },
+              { label: 'Students', view: 'students' },
               { label: 'My Classes', view: 'mystudents' },
             ].map((item) => (
               <button

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import ProfileIcon from './ProfileIcon'
+import { useWindowWidth } from '../hooks/useWindowWidth'
+import DesktopHeader from './DesktopHeader'
 
 // ============================================
 // MyStudents — teacher's own class rosters
@@ -12,6 +14,7 @@ function MyStudents({ staffId, houses, onSelectStudent, onBack, profile, onNavig
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadingStudents, setLoadingStudents] = useState(false)
+  const isDesktop = useWindowWidth() >= 800
 
   const houseMap = {}
   houses.forEach((h) => { houseMap[h.id] = h })
@@ -68,8 +71,17 @@ function MyStudents({ staffId, houses, onSelectStudent, onBack, profile, onNavig
   }, [selectedSection])
 
   return (
-    <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
-      <div style={{ maxWidth: 400, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f5f4' }}>
+      {isDesktop && (
+        <DesktopHeader
+          profile={profile}
+          houses={houses}
+          currentView="mystudents"
+          onNavigate={onNavigate}
+          onSignOut={onSignOut}
+        />
+      )}
+      <div style={{ maxWidth: isDesktop ? 900 : 400, margin: '0 auto', padding: isDesktop ? '40px' : '24px 16px 40px' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -84,7 +96,12 @@ function MyStudents({ staffId, houses, onSelectStudent, onBack, profile, onNavig
             ← Back
           </button>
           <h1 style={{ fontSize: 18, fontWeight: 700 }}>My Students</h1>
-          <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
+          <>
+              {!isDesktop && (
+                <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
+              )}
+              {isDesktop && <div style={{ width: 70 }} />}
+            </>
         </div>
 
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
@@ -135,7 +152,12 @@ function MyStudents({ staffId, houses, onSelectStudent, onBack, profile, onNavig
         {loadingStudents && <p style={{ textAlign: 'center', color: '#888' }}>Loading students...</p>}
 
         {/* Student list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{
+          display: isDesktop ? 'grid' : 'flex',
+          gridTemplateColumns: isDesktop ? '1fr 1fr' : undefined,
+          flexDirection: isDesktop ? undefined : 'column',
+          gap: isDesktop ? 8 : 4,
+        }}>
           {students.map((student) => {
             const house = houseMap[student.house_id]
             return (

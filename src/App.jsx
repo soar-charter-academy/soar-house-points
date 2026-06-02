@@ -8,6 +8,9 @@ import HouseHistory from './components/HouseHistory'
 import StudentDirectory from './components/StudentDirectory'
 import MyStudents from './components/MyStudents'
 import ProfileIcon from './components/ProfileIcon'
+import { usePullToRefresh } from './hooks/usePullToRefresh'
+import { useWindowWidth } from './hooks/useWindowWidth'
+import DesktopHeader from './components/DesktopHeader'
 
 // ============================================
 // App — main application component
@@ -28,6 +31,14 @@ import ProfileIcon from './components/ProfileIcon'
     const [showProfileMenu, setShowProfileMenu] = useState(false)
     const [selectedHouseView, setSelectedHouseView] = useState(null)
     const [prefilledStudent, setPrefilledStudent] = useState(null)
+    const windowWidth = useWindowWidth()
+    const isDesktop = windowWidth >= 800
+
+    const { pullDistance, isRefreshing } = usePullToRefresh(async () => {
+    await supabase.from('houses').select('*').order('name').then(({ data }) => {
+      if (data) setHouses(data)
+    })
+  })
 
     useEffect(() => {
       const link = document.createElement('link')
@@ -128,17 +139,7 @@ import ProfileIcon from './components/ProfileIcon'
     await supabase.auth.signOut()
   }
 
-  // ---- Render: loading state ----
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <p>Loading...</p>
-      </div>
-    )
-  }
-
   function handleProfileNavigate(view) {
-    setShowProfileMenu(false)
     setSelectedHouseView(null)
     if (view === 'myhouse') {
       const myHouse = houses.find((h) => h.id === profile.house_id)
@@ -148,6 +149,15 @@ import ProfileIcon from './components/ProfileIcon'
     else {
       setView(view)
     }
+  }
+
+  // ---- Render: loading state ----
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <p>Loading...</p>
+      </div>
+    )
   }
 
   // ---- Render: unauthorized (student or non-staff account) ----
@@ -246,6 +256,7 @@ import ProfileIcon from './components/ProfileIcon'
     return (
       <HouseHistory
         house={selectedHouseView}
+        houses={houses}
         currentUserId={session.user.id}
         onBack={() => setSelectedHouseView(null)}
         isMyHouse={selectedHouseView?.id === profile.house_id}
@@ -320,62 +331,126 @@ import ProfileIcon from './components/ProfileIcon'
   // Houses are sorted alphabetically by name from the database.
   // Layout: 2×2 grid for the first four, fifth centered below.
   return (
-    <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
-      <div style={{ maxWidth: 400, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f5f4' }}>
+      {/* Desktop header */}
+      {isDesktop && (
+        <DesktopHeader
+          profile={profile}
+          houses={houses}
+          currentView={view}
+          onNavigate={handleProfileNavigate}
+          onSignOut={signOut}
+        />
+      )}
 
-        {/* Header with logo and profile */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <img src="/images/logo.png" alt="SOAR" style={{ height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
-          <ProfileIcon
-            profile={profile}
-            houses={houses}
-            onNavigate={handleProfileNavigate}
-            onSignOut={signOut}
-          />
-        </div>      
+      <div style={{
+        maxWidth: isDesktop ? 1100 : 400,
+        margin: '0 auto',
+        padding: isDesktop ? '40px 40px' : '24px 16px 40px',
+        display: isDesktop ? 'grid' : 'block',
+        gridTemplateColumns: isDesktop ? '1fr 380px' : undefined,
+        gap: isDesktop ? 40 : undefined,
+        alignItems: isDesktop ? 'start' : undefined,
+      }}>
 
-        {/* House buttons — first four in a 2×2 grid */}
-        <div
-          style={{
+        {/* Left column: header (mobile only) + house buttons */}
+        <div>
+          {/* Mobile header */}
+          {!isDesktop && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <img src="/images/logo.png" alt="SOAR" style={{ height: 40, objectFit: 'contain', flexShrink: 0 }} />
+              <ProfileIcon
+                profile={profile}
+                houses={houses}
+                onNavigate={handleProfileNavigate}
+                onSignOut={signOut}
+              />
+            </div>
+          )}
+
+          {/* Desktop section title */}
+          {isDesktop && (
+            <h2 style={{
+              fontFamily: "'Russo One', sans-serif",
+              fontSize: 13,
+              fontWeight: 400,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: '#aaa',
+              marginBottom: 16,
+            }}>
+              Award Points
+            </h2>
+          )}
+
+          {/* Pull-to-refresh */}
+          {(pullDistance > 0 || isRefreshing) && (
+            <div style={{
+              textAlign: 'center',
+              height: Math.min(pullDistance, 60),
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#888', fontSize: 13, overflow: 'hidden',
+              transition: isRefreshing ? 'none' : 'height 0.1s',
+            }}>
+              {isRefreshing ? '↻ Refreshing...' : pullDistance > 80 ? '↑ Release to refresh' : '↓ Pull to refresh'}
+            </div>
+          )}
+
+          {/* House buttons grid */}
+          <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 12,
-          }}
-        >
-          {houses.slice(0, 4).map((house) => (
-            <HouseButton key={house.id} house={house} onTap={handleHouseTap} popTrigger={confirmedPops[house.id]?.count || 0} popValue={confirmedPops[house.id]?.value || 1} />
-          ))}
-        </div>
+            gridTemplateColumns: isDesktop ? '1fr 1fr 1fr' : '1fr 1fr',
+            gap: isDesktop ? 16 : 12,
+          }}>
+            {houses.slice(0, isDesktop ? 5 : 4).map((house) => (
+              <HouseButton
+                key={house.id}
+                house={house}
+                onTap={handleHouseTap}
+                popTrigger={confirmedPops[house.id]?.count || 0}
+                popValue={confirmedPops[house.id]?.value || 1}
+              />
+            ))}
+          </div>
 
-        {/* Fifth house centered below the grid */}
-        {houses[4] && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
-            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center' }}>
-              <div style={{ width: 'calc(50% - 6px)' }}>
-                <HouseButton key={houses[4].id} house={houses[4]} onTap={handleHouseTap} popTrigger={confirmedPops[houses[4].id]?.count || 0} popValue={confirmedPops[houses[4].id]?.value || 1} />
+          {/* Fifth house — mobile only (desktop shows it in the 3-column grid) */}
+          {!isDesktop && houses[4] && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+              <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ width: 'calc(50% - 6px)' }}>
+                  <HouseButton
+                    key={houses[4].id}
+                    house={houses[4]}
+                    onTap={handleHouseTap}
+                    popTrigger={confirmedPops[houses[4].id]?.count || 0}
+                    popValue={confirmedPops[houses[4].id]?.value || 1}
+                  />
+                </div>
               </div>
             </div>
+          )}
+
+          {/* Leaderboard — mobile only (desktop shows it in right column) */}
+          {!isDesktop && <Leaderboard onHouseTap={setSelectedHouseView} />}
+        </div>
+
+        {/* Right column: leaderboard (desktop only) */}
+        {isDesktop && (
+          <div style={{ position: 'sticky', top: 88 }}>
+            <Leaderboard onHouseTap={setSelectedHouseView} />
           </div>
         )}
+      </div>
 
-        <Leaderboard onHouseTap={setSelectedHouseView} />
-
-        {/* Point confirmation modal */}
-        {selectedHouse && (
-          <PointModal
-            house={selectedHouse}
-            prefilledStudent={prefilledStudent}
-            onConfirm={(data) => {
-              confirmPoint(data)
-              setPrefilledStudent(null)
-            }}
-            onCancel={() => {
-              setSelectedHouse(null)
-              setPrefilledStudent(null)
-            }}
-          />
-        )}
-      </div>    
+      {/* Point modal */}
+      {selectedHouse && (
+        <PointModal
+          house={selectedHouse}
+          prefilledStudent={prefilledStudent}
+          onConfirm={(data) => { confirmPoint(data); setPrefilledStudent(null) }}
+          onCancel={() => { setSelectedHouse(null); setPrefilledStudent(null) }}
+        />
+      )}
     </div>
   )
 }

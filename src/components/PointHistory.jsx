@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import PointRow from './PointRow'
 import ProfileIcon from './ProfileIcon'
+import { useWindowWidth } from '../hooks/useWindowWidth'
+import DesktopHeader from './DesktopHeader'
 
 // ============================================
 // PointHistory — house points history
@@ -16,6 +18,8 @@ function PointHistory({ staffId, houses, onBack, profile, onNavigate, onSignOut 
   const [selected, setSelected] = useState(new Set())
   const [tab, setTab] = useState('mine')
   const [profiles, setProfiles] = useState({})
+  const width = useWindowWidth()
+  const isDesktop = width >= 800
 
   const houseMap = {}
   houses.forEach((h) => { houseMap[h.id] = h })
@@ -124,8 +128,17 @@ function PointHistory({ staffId, houses, onBack, profile, onNavigate, onSignOut 
   const hasSelection = selected.size > 0
 
   return (
-    <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
-      <div style={{ maxWidth: 400, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', padding: isDesktop ? '0' : '24px 16px 40px', background: '#f5f5f4' }}>
+      {isDesktop && (
+        <DesktopHeader
+          profile={profile}
+          houses={houses}
+          currentView="history"
+          onNavigate={onNavigate}
+          onSignOut={onSignOut}
+        />
+      )}
+      <div style={{ maxWidth: isDesktop ? 900 : 400, margin: '0 auto', padding: isDesktop ? '40px' : '0' }}>
 
         {/* Header row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -139,7 +152,7 @@ function PointHistory({ staffId, houses, onBack, profile, onNavigate, onSignOut 
           >
             ← Back
           </button>
-          <h1 style={{ fontSize: 18, fontWeight: 700 }}>Points History</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 700 }}>History</h1>
           {hasSelection ? (
             <button
               onClick={deleteSelected}
@@ -152,7 +165,12 @@ function PointHistory({ staffId, houses, onBack, profile, onNavigate, onSignOut 
               Remove ({selected.size})
             </button>
           ) : (
-            <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
+            <>
+              {!isDesktop && (
+                <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
+              )}
+              {isDesktop && <div style={{ width: 70 }} />}
+              </>
           )}
         </div>
 

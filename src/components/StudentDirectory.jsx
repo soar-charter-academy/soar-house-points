@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import ProfileIcon from './ProfileIcon'
+import { useWindowWidth } from '../hooks/useWindowWidth'
+import DesktopHeader from './DesktopHeader'
+
 
 // ============================================
 // StudentDirectory — searchable student list
@@ -12,6 +15,7 @@ function StudentDirectory({ houses, onSelectStudent, onBack, profile, onNavigate
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState('name')  // 'name', 'grade', 'house'
   const [filterValue, setFilterValue] = useState(null)  // selected grade or house_id
+  const isDesktop = useWindowWidth() >= 800
 
   function gradeLabel(g) {
     if (g === -1) return 'TK'
@@ -74,8 +78,9 @@ function StudentDirectory({ houses, onSelectStudent, onBack, profile, onNavigate
   })()
 
   return (
-    <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
-      <div style={{ maxWidth: 400, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f5f4' }}>
+      {isDesktop && <DesktopHeader profile={profile} houses={houses} currentView="..." onNavigate={onNavigate} onSignOut={onSignOut} />}
+      <div style={{ maxWidth: isDesktop ? 900 : 400, margin: '0 auto', padding: isDesktop ? '40px' : '24px 16px 40px' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -90,7 +95,12 @@ function StudentDirectory({ houses, onSelectStudent, onBack, profile, onNavigate
             ← Back
           </button>
           <h1 style={{ fontSize: 18, fontWeight: 700 }}>Students</h1>
-          <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
+          <>
+              {!isDesktop && (
+                <ProfileIcon profile={profile} houses={houses} onNavigate={onNavigate} onSignOut={onSignOut} />
+              )}
+              {isDesktop && <div style={{ width: 70 }} />}
+            </>
         </div>
 
         {/* Search */}
@@ -210,7 +220,12 @@ function StudentDirectory({ houses, onSelectStudent, onBack, profile, onNavigate
         </p>
 
         {/* Student list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{
+          display: isDesktop ? 'grid' : 'flex',
+          gridTemplateColumns: isDesktop ? '1fr 1fr' : undefined,
+          flexDirection: isDesktop ? undefined : 'column',
+          gap: isDesktop ? 8 : 4,
+        }}>
           {filtered.map((student) => {
             const house = houseMap[student.house_id]
             return (

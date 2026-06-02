@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import ProfileIcon from './ProfileIcon'
+import { useWindowWidth } from '../hooks/useWindowWidth'
+import DesktopHeader from './DesktopHeader'
 
 // ============================================
 // HouseHistory — point history for a single house
 // ============================================
 
-function HouseHistory({ house, currentUserId, currentUserHouseId, onBack, onChangeHouse, profile, houses, onNavigate, onSignOut }) {
+function HouseHistory({ house, currentUserId, currentUserHouseId, isMyHouse, onBack, onChangeHouse, profile, houses, onNavigate, onSignOut }) {
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [profiles, setProfiles] = useState({})
   const [removing, setRemoving] = useState(new Set())
+  const isDesktop = useWindowWidth() >= 800
 
   async function deletePoint(pointId) {
     setRemoving((prev) => new Set(prev).add(pointId))
@@ -73,8 +76,9 @@ function HouseHistory({ house, currentUserId, currentUserHouseId, onBack, onChan
   const totalPoints = points.reduce((sum, p) => sum + p.value, 0)
 
   return (
-    <div style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
-      <div style={{ maxWidth: 400, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f5f4' }}>
+      {isDesktop && <DesktopHeader profile={profile} houses={houses} currentView="..." onNavigate={onNavigate} onSignOut={onSignOut} />}
+      <div style={{ maxWidth: isDesktop ? 900 : 400, margin: '0 auto', padding: isDesktop ? '40px' : '24px 16px 40px' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>

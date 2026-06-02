@@ -2,7 +2,7 @@
 // PointRow — single point entry in history
 // ============================================
 
-function PointRow({ point, house, isSelected, isRemoving, onToggle, onDelete, staffName, showCheckbox = true }) {
+function PointRow({ point, house, isSelected, isRemoving, onToggle, onDelete, staffName, showCheckbox = false, isDesktop = false }) {
 
   if (!point) return null
 
@@ -21,14 +21,14 @@ function PointRow({ point, house, isSelected, isRemoving, onToggle, onDelete, st
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        padding: isRemoving ? '0px 16px' : '12px 16px',
+        padding: isRemoving ? '0px 16px' : isDesktop ? '12px 20px' : '12px 16px',
         background: isSelected ? '#e8f0fe' : '#fff',
         borderRadius: 12,
         boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
         border: isSelected ? '2px solid #4285f4' : '2px solid transparent',
         opacity: isRemoving ? 0 : 1,
         transform: isRemoving ? 'translateX(60px)' : 'translateX(0)',
-        maxHeight: isRemoving ? '0px' : '120px',
+        maxHeight: isRemoving ? '0px' : isDesktop ? '60px' : '120px',
         marginBottom: isRemoving ? '-8px' : '0px',
         overflow: 'hidden',
         transition: 'opacity 0.3s ease, transform 0.3s ease, max-height 0.4s ease 0.1s, padding 0.4s ease 0.1s, margin-bottom 0.4s ease 0.1s, background 0.15s ease, border 0.15s ease',
