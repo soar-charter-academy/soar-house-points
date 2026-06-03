@@ -4,7 +4,7 @@
 // Caches the app shell for fast loading.
 // Network requests to Supabase always go to network.
 
-const CACHE_NAME = 'soar-hp-v12'
+const CACHE_NAME = 'soar-hp-v14'
 const SHELL_URLS = [
   '/',
   '/index.html',

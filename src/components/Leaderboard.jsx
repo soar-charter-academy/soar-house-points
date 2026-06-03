@@ -125,7 +125,6 @@ function Leaderboard({ onHouseTap }) {
               padding: '10px 14px',
               background: '#fff',
               borderRadius: 10,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
               cursor: 'pointer',
             }}
           >
