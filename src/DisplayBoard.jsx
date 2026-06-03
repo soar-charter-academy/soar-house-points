@@ -150,7 +150,6 @@ export default function DisplayBoard() {
                 height: '11vw',
                 objectFit: 'cover',
                 borderRadius: '0.8vw',
-                boxShadow: `0 0 3vw ${house.color_hex}55`,
                 marginTop: '1vh',
               }}
             />
