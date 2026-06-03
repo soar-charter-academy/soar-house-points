@@ -44,7 +44,7 @@ function HouseButton({ house, onTap, popTrigger = 0, popValue = 1 }) {
         aspectRatio: '1',
         background: 'transparent',
         border: 'none',
-        borderRadius: 16,
+        borderRadius: 0,
         cursor: 'pointer',
         padding: 0,
         transform: pressed ? 'scale(0.95)' : 'scale(1)',
@@ -60,19 +60,8 @@ function HouseButton({ house, onTap, popTrigger = 0, popValue = 1 }) {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          borderRadius: 16,
+          borderRadius: 0,
           display: 'block',
-        }}
-      />
-
-      {/* Bevel overlay — renders on top of the image */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: 16,
-          boxShadow: 'inset 0 3px 6px rgba(255,255,255,0.4), inset 0 -3px 6px rgba(0,0,0,0.4)',
-          pointerEvents: 'none',
         }}
       />
 

@@ -113,7 +113,6 @@ function PointModal({ house, onConfirm, onCancel, prefilledStudent = null }) {
                 position: 'absolute',
                 inset: 0,
                 borderRadius: 10,
-                boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.3)',
                 pointerEvents: 'none',
               }}
             />
@@ -328,7 +327,6 @@ function PointModal({ house, onConfirm, onCancel, prefilledStudent = null }) {
             border: 'none',
             borderRadius: 10,
             cursor: 'pointer',
-            boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.3)',
           }}
         >
           {confirmingLarge ? `Confirm ${value} points — are you sure?` : 'Confirm'}
