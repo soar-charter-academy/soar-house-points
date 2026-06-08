@@ -92,7 +92,7 @@ function Leaderboard({ onHouseTap }) {
           color: '#888',
           letterSpacing: '0.1em',
         }}>
-          🔒 RESULTS REVEALED TOMORROW
+          🔒 RESULTS REVEALED SOON
         </div>
       )}
 

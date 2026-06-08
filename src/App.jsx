@@ -11,6 +11,7 @@ import ProfileIcon from './components/ProfileIcon'
 import { usePullToRefresh } from './hooks/usePullToRefresh'
 import { useWindowWidth } from './hooks/useWindowWidth'
 import DesktopHeader from './components/DesktopHeader'
+import { SUMMER_MODE } from './config'
 
 // ============================================
 // App — main application component
@@ -97,6 +98,7 @@ import DesktopHeader from './components/DesktopHeader'
 
   // Open the confirmation modal for a house
   function handleHouseTap(houseId) {
+    if (SUMMER_MODE) return
     const house = houses.find((h) => h.id === houseId)
     if (house) setSelectedHouse(house)
   }
@@ -395,6 +397,20 @@ import DesktopHeader from './components/DesktopHeader'
               {isRefreshing ? '↻ Refreshing...' : pullDistance > 80 ? '↑ Release to refresh' : '↓ Pull to refresh'}
             </div>
           )}
+
+          {SUMMER_MODE && (
+            <div style={{
+              textAlign: 'center',
+              padding: '10px 16px',
+              background: '#1a1a1a',
+              borderRadius: 8,
+              marginBottom: 16,
+              fontSize: 13,
+              color: '#888',
+            }}>
+              🏖️ Summer break — point giving resumes in the fall
+            </div>
+          )}  
 
           {/* House buttons grid */}
           <div style={{
