@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import { SUSPENSE_MODE } from './config'
 
 // ============================================
 // DisplayBoard — Vivi digital signage display
@@ -67,6 +68,66 @@ export default function DisplayBoard() {
   const period = PERIODS[periodIndex]
   const rankColors = ['#FFD700', '#C0C0C0', '#CD7F32', '#555', '#555']
 
+  // ---- Suspense mode: hide all totals during Tournament of Houses ----
+  if (SUSPENSE_MODE) {
+    return (
+      <div style={{
+        width: '100vw',
+        height: '100vh',
+        background: '#111',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Russo One', sans-serif",
+        overflow: 'hidden',
+      }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');`}</style>
+
+        <img
+          src="/images/logo.png"
+          alt="SOAR"
+          style={{ height: '12vh', objectFit: 'contain', marginBottom: '4vh', opacity: 0.9 }}
+        />
+
+        <div style={{
+          fontSize: '7vh',
+          color: '#fff',
+          letterSpacing: '0.06em',
+          textAlign: 'center',
+          lineHeight: 1.1,
+          marginBottom: '3vh',
+        }}>
+          TOURNAMENT<br />OF HOUSES
+        </div>
+
+        <div style={{
+          display: 'flex',
+          gap: 0,
+          width: '40vw',
+          height: '1vh',
+          borderRadius: '0.5vh',
+          overflow: 'hidden',
+          marginBottom: '4vh',
+        }}>
+          {['#0073a5', '#4f3f83', '#00935c', '#582831', '#ffb70c'].map((color) => (
+            <div key={color} style={{ flex: 1, background: color }} />
+          ))}
+        </div>
+
+        <div style={{
+          fontSize: '3.5vh',
+          color: '#888',
+          letterSpacing: '0.15em',
+          textAlign: 'center',
+        }}>
+          RESULTS REVEALED TOMORROW
+        </div>
+      </div>
+    )
+  }
+
+  // ---- Normal display board ----
   return (
     <div style={{
       width: '100vw',
@@ -160,7 +221,7 @@ export default function DisplayBoard() {
               color: '#fff',
               lineHeight: 1,
             }}>
-              {house.total_points}
+              {SUSPENSE_MODE ? '???' : house.total_points}
             </div>
 
             {/* Bar */}
@@ -174,7 +235,8 @@ export default function DisplayBoard() {
             }}>
               <div style={{
                 height: '100%',
-                width: `${(house.total_points / maxPoints) * 100}%`,
+                width: SUSPENSE_MODE ? '100%' : `${(house.total_points / maxPoints) * 100}%`,
+                opacity: SUSPENSE_MODE ? 0.15 : 1,
                 background: house.color_hex,
                 borderRadius: '0.6vh',
                 transition: 'width 1s ease',

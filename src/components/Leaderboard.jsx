@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { SUSPENSE_MODE } from '../config'
 
 function Leaderboard({ onHouseTap }) {
   const [totals, setTotals] = useState([])
@@ -20,7 +21,6 @@ function Leaderboard({ onHouseTap }) {
       const start = new Date(now.getFullYear(), now.getMonth(), 1)
       return start.toISOString()
     }
-    // 'year' — start of school year (August 1)
     const year = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1
     return new Date(year, 7, 1).toISOString()
   }
@@ -61,6 +61,10 @@ function Leaderboard({ onHouseTap }) {
     { key: 'year', label: 'This Year' },
   ]
 
+  const displayTotals = SUSPENSE_MODE
+    ? [...totals].sort((a, b) => a.house_name.localeCompare(b.house_name))
+    : totals
+
   return (
     <div style={{ marginTop: 24 }}>
       <h2 style={{
@@ -75,6 +79,22 @@ function Leaderboard({ onHouseTap }) {
       }}>
         Leaderboard
       </h2>
+
+      {/* Suspense mode banner */}
+      {SUSPENSE_MODE && (
+        <div style={{
+          textAlign: 'center',
+          padding: '8px 12px',
+          background: '#1a1a1a',
+          borderRadius: 8,
+          marginBottom: 12,
+          fontSize: 12,
+          color: '#888',
+          letterSpacing: '0.1em',
+        }}>
+          🔒 RESULTS REVEALED TOMORROW
+        </div>
+      )}
 
       {/* Period tabs */}
       <div style={{
@@ -110,7 +130,7 @@ function Leaderboard({ onHouseTap }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {totals.map((house, index) => (
+        {displayTotals.map((house, index) => (
           <div
             key={house.house_id}
             onClick={() => onHouseTap && onHouseTap({
@@ -129,7 +149,7 @@ function Leaderboard({ onHouseTap }) {
             }}
           >
             <div style={{ width: 40, flexShrink: 0, textAlign: 'center' }}>
-              {index < 3 ? (
+              {!SUSPENSE_MODE && index < 3 ? (
                 <img
                   src={`/images/${['first', 'second', 'third'][index]}.png`}
                   alt={`${index + 1}${['st', 'nd', 'rd'][index]} place`}
@@ -147,7 +167,8 @@ function Leaderboard({ onHouseTap }) {
               }}>
                 <div style={{
                   height: '100%',
-                  width: `${(house.total_points / maxPoints) * 100}%`,
+                  width: SUSPENSE_MODE ? '100%' : `${(house.total_points / maxPoints) * 100}%`,
+                  opacity: SUSPENSE_MODE ? 0.15 : 1,
                   background: house.color_hex,
                   borderRadius: 3,
                   transition: 'width 0.5s ease',
@@ -163,7 +184,7 @@ function Leaderboard({ onHouseTap }) {
               minWidth: 40,
               textAlign: 'right',
             }}>
-              {house.total_points}
+              {SUSPENSE_MODE ? '???' : house.total_points}
             </span>
           </div>
         ))}
