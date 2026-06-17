@@ -1,26 +1,16 @@
 on:
   schedule:
-    # Once nightly at 4am PT (11:00 UTC), Monday-Friday
+    # Nightly at 4am PT (11:00 UTC), Monday-Friday
     - cron: '0 11 * * 1-5'
 
-  # Allow manual trigger from GitHub Actions tab
   workflow_dispatch:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: pip install requests supabase python-dotenv
 
       - name: Create .env file
         run: |
@@ -28,5 +18,8 @@ jobs:
           echo "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" >> .env
           echo "AERIES_API_CERT=${{ secrets.AERIES_API_CERT }}" >> .env
 
+      - name: Install dependencies
+        run: python3.12 -m pip install requests supabase python-dotenv --break-system-packages
+
       - name: Run Aeries sync
-        run: python sync/aeries_sync.py
+        run: python3.12 sync/aeries_sync.py
